@@ -15,15 +15,15 @@
 entry/src/main/ets/
 ├── common/                  // 公共资源
 │   ├── constants/           // 常量定义 (如颜色、页面路径、枚举)
-│   ├── images/              // 图片资源引用 (虽然主要在resources目录，这里可放路径变量)
+│   ├── images/              // 图片资源引用 
 │   └── utils/               // 工具类 (如时间格式化、日志打印)
-├── model/                   // 数据模型 (TypeScript 接口/类)
+├── model/                   // 数据模型 
 │   ├── HealthDataModel.ets   // 定义心率、血压、睡眠等数据结构
 │   ├── DoctorModel.ets       // 定义医生信息结构
 │   └── CardInfoModel.ets     // 定义首页卡片的数据结构
 ├── viewmodel/               // 视图模型 (负责获取数据，模拟API)
 │   ├── HomeViewModel.ets     // 首页数据逻辑
-│   └── HealthViewModel.ets   // 健康页面数据逻辑 (这里写 Mock 数据)
+│   └── HealthViewModel.ets   // 健康页面数据逻辑
 ├── pages/                   // 页面级组件 (Page) - 对应 Router 路径
 │   ├── Index.ets             // 1. 中控屏主界面 (S2 主界面)
 │   ├── WellnessPage.ets     // 2. 居家康养主页 (点击卡片1跳转)
