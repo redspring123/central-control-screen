@@ -1,16 +1,49 @@
 {
   "string": [
-    {
-      "name": "module_desc",
-      "value": "module description"
-    },
-    {
-      "name": "EntryAbility_desc",
-      "value": "description"
-    },
-    {
-      "name": "EntryAbility_label",
-      "value": "label"
-    }
+    { "name": "time_placeholder", "value": "08:08" },
+    { "name": "nav_home", "value": "我家" },
+    { "name": "nav_scene", "value": "客厅" },
+
+    { "name": "btn_warm_home", "value": "温馨回家" },
+    { "name": "btn_safe_leave", "value": "安全离家" },
+    { "name": "btn_full_temp", "value": "全屋恒温" },
+    { "name": "btn_dehumidify", "value": "全屋除湿" },
+    { "name": "btn_ventilation", "value": "全屋通风" },
+    { "name": "btn_more_scenes", "value": "更多场景" },
+    { "name": "btn_one_key_call", "value": "一键呼叫" },
+    { "name": "btn_sport_health", "value": "运动健康" },
+
+    { "name": "card_energy_title", "value": "家庭能耗" },
+    { "name": "card_energy_power", "value": "43 度" },
+    { "name": "card_energy_today", "value": "今日用电" },
+    { "name": "card_energy_carbon", "value": "本月碳排放量: 80kg" },
+
+    { "name": "card_security_title", "value": "家庭安防" },
+    { "name": "card_security_status", "value": "离家警戒中" },
+    { "name": "card_security_desc", "value": "所有安防设备正常运行中" },
+    { "name": "btn_alarm_home", "value": "在家警戒" },
+    { "name": "btn_alarm_exit", "value": "退出警戒" },
+
+    { "name": "card_consult_title", "value": "在线问诊" },
+    { "name": "card_consult_time", "value": "服务时间 8:00~21:00" },
+    { "name": "btn_consult_now", "value": "立即咨询" },
+
+    { "name": "card_health_title", "value": "居家康养" },
+    { "name": "card_health_sleep", "value": "睡眠质量" },
+    { "name": "card_health_value", "value": "12mg/L  120mg/L" },
+
+    { "name": "card_network_title", "value": "家庭网络" },
+    { "name": "card_network_quality", "value": "良" },
+    { "name": "card_network_speed_up", "value": "↑ 210 Mbps" },
+    { "name": "card_network_speed_down", "value": "↓ 35 Mbps" },
+    { "name": "btn_network_accelerate", "value": "一键加速" },
+
+    { "name": "card_intercom_title", "value": "可视对讲" },
+    { "name": "btn_door_intercom", "value": "门禁对讲" },
+    { "name": "btn_video_monitor", "value": "视频监视" },
+
+    { "name": "module_desc", "value": "中央控制屏模块" },
+    { "name": "EntryAbility_desc", "value": "主界面入口" },
+    { "name": "EntryAbility_label", "value": "我家控制屏" }
   ]
 }

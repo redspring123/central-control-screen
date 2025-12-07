@@ -1,8 +1,27 @@
 {
   "float": [
-    {
-      "name": "page_text_font_size",
-      "value": "50fp"
-    }
+    { "name": "font_size_small", "value": "12fp" },
+    { "name": "font_size_normal", "value": "14fp" },
+    { "name": "font_size_large", "value": "16fp" },
+    { "name": "font_size_xlarge", "value": "20fp" },
+
+    { "name": "icon_small", "value": "20fp" },
+    { "name": "icon_normal", "value": "30fp" },
+    { "name": "icon_large", "value": "80fp" },
+
+    { "name": "radius_card", "value": "10fp" },
+    { "name": "radius_button_round", "value": "20fp" },
+
+    { "name": "margin_tiny", "value": "5fp" },
+    { "name": "margin_small", "value": "10fp" },
+    { "name": "margin_normal", "value": "15fp" },
+    { "name": "margin_large", "value": "20fp" },
+
+    { "name": "space_row", "value": "10fp" },
+    { "name": "space_row_wide", "value": "15fp" },
+    { "name": "space_row_extra", "value": "20fp" },
+
+    { "name": "card_height_default", "value": "60fp" },
+    { "name": "image_health_size", "value": "90fp" }
   ]
 }
