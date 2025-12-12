@@ -27,8 +27,8 @@
   },
   "modules": [
     {
-      "name": "entry",
-      "srcPath": "./entry",
+      "name": "default",
+      "srcPath": "./products/default",
       "targets": [
         {
           "name": "default",
@@ -37,6 +37,26 @@
           ]
         }
       ]
+    },
+    {
+      "name": "health",
+      "srcPath": "./features/health",
+    },
+    {
+      "name": "medical",
+      "srcPath": "./features/medical",
+    },
+    {
+      "name": "uicomponents",
+      "srcPath": "./commons/uicomponents",
+    },
+    {
+      "name": "utils",
+      "srcPath": "./commons/utils",
+    },
+    {
+      "name": "mainpage",
+      "srcPath": "./features/mainpage"
     }
   ]
 }

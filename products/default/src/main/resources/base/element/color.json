@@ -1,0 +1,14 @@
+{
+  "color": [
+    { "name": "bg_page", "value": "#FF1A5F7E" },
+    { "name": "bg_card", "value": "#FF8D8787" },
+    { "name": "text_white", "value": "#FFFFFF" },
+    { "name": "text_gray", "value": "#AAAAAA" },
+    { "name": "text_red", "value": "#FF4444" },
+    { "name": "text_green", "value": "#4CAF50" },
+    { "name": "text_blue", "value": "#2196F3" },
+    { "name": "btn_green", "value": "#4CAF50" },
+    { "name": "btn_red", "value": "#F44336" },
+    { "name": "btn_blue", "value": "#2196F3" }
+  ]
+}
