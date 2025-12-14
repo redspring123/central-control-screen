@@ -75,6 +75,9 @@
     {
       "name": "page_text_font_size",
       "value": "50fp"
-    }
+    },
+    { "name": "icon_box_size", "value": "36vp" },
+    { "name": "icon_inside_size", "value": "28vp" },
+    { "name": "card_padding", "value": "16vp" }
   ]
 }

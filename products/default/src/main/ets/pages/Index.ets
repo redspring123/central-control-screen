@@ -1,4 +1,5 @@
 import {MainPage} from 'mainpage'
+
 @Entry
 @Component
 struct Index {
@@ -9,6 +10,6 @@ struct Index {
       MainPage()
     }
     .backgroundColor($r('app.color.bg_page'))
-    .padding({ top: 36, bottom: 28 })
+
   }
 }

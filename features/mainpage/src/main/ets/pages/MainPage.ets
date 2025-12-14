@@ -1,98 +1,105 @@
-import { btn } from '../model/btn'
-@Preview
+import { btn } from '../model/btn' // 保持你的引用
+import { RouterHelper } from '../model/RouterHelper' //
+
+@Entry
 @Component
-export struct MainPage {
+export struct MainPage{
   @State showHome: boolean = true;
   @State showScene: boolean = false;
 
-
-  private sceneList :btn[]= [
+  // 保持你的数据结构不变
+  private sceneList: btn[] = [
     { key: 'btn_warm_home', icon: 'temp_home' },
     { key: 'btn_safe_leave', icon: 'temp_home' },
     { key: 'btn_full_temp', icon: 'full_temp' },
     { key: 'btn_dehumidify', icon: 'dehumidify' },
     { key: 'btn_ventilation', icon: 'ventilation' },
     { key: 'btn_more_scenes', icon: 'foreground' },
-    { key: 'btn_one_key_call', icon: 'ventilation' },
-    { key: 'btn_sport_health', icon: 'foreground' }
+    { key: 'btn_one_key_call', icon: 'ventilation' }, // 需跳转
+    { key: 'btn_sport_health', icon: 'foreground' }   // 需跳转
   ];
 
   build() {
     Column() {
-      // 1. 顶部导航栏 (保持原样)
-      Row({ space: $r('app.float.space_row_extra') }) {
-        Text($r('app.string.time_placeholder'))
+      // 1. 顶部导航栏 (保持原样，微调间距)
+      Row() {
+        Text("08:08") // 假设这是时间占位
           .fontSize($r('app.float.font_size_large'))
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_white'))
 
-        Image($r('app.media.home_icon'))
-          .width($r('app.float.icon_normal'))
-          .height($r('app.float.icon_normal'))
-          .margin($r('app.float.margin_small'))
-          .opacity(this.showHome ? 1 : 0.5)
-
-        Image($r('app.media.sofa_icon'))
-          .width($r('app.float.icon_normal'))
-          .height($r('app.float.icon_normal'))
-          .margin($r('app.float.margin_small'))
-          .opacity(this.showScene ? 1 : 0.5)
+        Row({ space: 15 }) {
+          Image($r('app.media.home_icon'))
+            .width(24).height(24)
+            .opacity(this.showHome ? 1 : 0.5)
+          Image($r('app.media.sofa_icon'))
+            .width(24).height(24)
+            .opacity(this.showScene ? 1 : 0.5)
+        }.margin({ left: 20 })
       }
-      .backgroundColor($r('app.color.bg_page'))
-      .padding($r('app.float.margin_small'))
       .width('100%')
+      .padding({ left: 20, right: 20, top: 15, bottom: 15 })
 
+      // 2. 内容区域
+      Row({ space: 15 }) {
 
-      // 2. 内容区域：使用 Row 实现三列布局
-      // 采用 Grid 实现左侧场景的 2x4 排列
-      Row({ space: $r('app.float.space_row_wide') }) {
-
-        // --- A. 左侧：8个场景按钮 (2列 x 4行)
+        // --- A. 左侧：8个场景按钮 (优化版) ---
         Grid() {
           ForEach(this.sceneList, (item: btn) => {
             GridItem() {
               Button() {
-                Row({ space: $r('app.float.space_row') }) {
-                  Column()
-                  {
+                Row() {
+                  // 1. 图标容器 (Icon Box) - 解决图标看不清的问题
+                  Column() {
                     Image($r(`app.media.${item.icon}`))
-                      .width($r('app.float.icon_normal'))
-                      .height($r('app.float.icon_normal'))
+                      .width($r('app.float.icon_inside_size'))
+                      .height($r('app.float.icon_inside_size'))
+                      .objectFit(ImageFit.Contain)
+                    // 如果你的PNG是黑色的，可以尝试反转颜色，或者保持原样，因为背景现在是半透明白，黑色也能看清
+                    // .fillColor(Color.White) // 如果是SVG解开此行
                   }
-                  .width('30%')
-                  Column()
-                  {
-                    Text($r(`app.string.${item.key}`))
-                      .fontSize($r('app.float.font_size_normal'))
-                      .fontColor($r('app.color.text_white'))
-                  }
-                  .width('50%')
+                  .width($r('app.float.icon_box_size'))
+                  .height($r('app.float.icon_box_size'))
+                  .backgroundColor($r('app.color.bg_icon_container')) // 半透明背景
+                  .borderRadius(10)
+                  .justifyContent(FlexAlign.Center)
+                  .alignItems(HorizontalAlign.Center)
+                  .margin({ right: 12 })
 
+                  // 2. 文字
+                  Text($r(`app.string.${item.key}`))
+                    .fontSize($r('app.float.font_size_normal'))
+                    .fontColor($r('app.color.text_white'))
+                    .fontWeight(FontWeight.Medium)
+                    .layoutWeight(1)
                 }
-                // 修正：确保 Row 内子组件垂直居中对齐
                 .width('100%')
-                .alignItems(VerticalAlign.Center)
-                .justifyContent(FlexAlign.SpaceAround)
-
+                .padding(10)
+                .justifyContent(FlexAlign.Start)
               }
+              .type(ButtonType.Normal)
               .backgroundColor($r('app.color.bg_card'))
               .borderRadius($r('app.float.radius_card'))
-              .width(120)
-              .height($r('app.float.card_height_default'))
+              .width('100%')
+              .height(80)
+              // 绑定点击事件，处理跳转
+              .onClick(() => {
+                RouterHelper.jump(item.key);
+              })
             }
-            .margin($r('app.float.margin_small'))
-          }, (item: btn) => item.key) // 使用 key 作为唯一标识
+          }, (item: btn) => item.key)
         }
-        .columnsTemplate('1fr 1fr') // 2 列，每列平均分配空间
-        .columnsGap($r('app.float.margin_small'))
-        .rowsGap($r('app.float.margin_small'))
-        .layoutWeight(1.2) // 赋予权重，占据第一列空间，略宽于普通卡片
+        .columnsTemplate('1fr 1fr')
+        .rowsGap(12)
+        .columnsGap(12)
+        .layoutWeight(1.2)
+        .height('100%')
 
-        // --- B. 中间 + 右侧：卡片区域 (使用 Row 包裹两个 Column，实现剩下的两列)
-        Row({ space: $r('app.float.space_row_wide') }) {
+        // --- B. 中间 + 右侧：卡片区域 ---
+        Row({ space: 15 }) {
 
-          // --- B1. 中间列：家庭能耗 + 家庭安防 + 在线问诊 (内容已完整补充)
-          Column() {
+          // === B1. 中间列 ===
+          Column({ space: 15 }) {
             // 家庭能耗
             Column() {
               Text($r('app.string.card_energy_title'))
@@ -161,91 +168,34 @@ export struct MainPage {
             .width('100%')
             .layoutWeight(1)
 
-            // 在线问诊
-            Column() {
-              Button() {
-                Row()
-                {
-                  Column() {
-                    Text($r('app.string.card_consult_title'))
-                      .fontSize($r('app.float.font_size_normal'))
-                      .fontWeight(FontWeight.Bold)
-                      .fontColor($r('app.color.text_white'))
-                    Text($r('app.string.card_consult_time'))
-                      .fontSize($r('app.float.font_size_small'))
-                      .fontColor($r('app.color.text_gray'))
-                      .margin({ top: $r('app.float.margin_tiny') })
-                  }
-                  .width('60%')
-                  .justifyContent(FlexAlign.SpaceBetween)
-
-                  Image($r('app.media.video_call'))
-                    .width($r('app.float.icon_large'))
-                    .height($r('app.float.icon_large'))
-                }
-                .justifyContent(FlexAlign.SpaceBetween)
-
-              }
-              .backgroundColor($r('app.color.bg_card'))
-              .width('100%')
-              .height('100%')
-            }
-            .backgroundColor($r('app.color.bg_card'))
-            .borderRadius($r('app.float.radius_card'))
-            .margin($r('app.float.margin_small'))
-            .padding($r('app.float.margin_normal'))
-            .width('100%')
-            .layoutWeight(1)
+            // 3. 在线问诊 (需跳转 -> card_consult)
+            this.InfoCardBuilder(
+              $r('app.string.card_consult_title'), // 标题
+              $r('app.string.card_consult_time'),  // 副标题或状态
+              '服务中',
+              $r('app.media.video_call'), // 背景大图标
+              '60fp',
+              true, // 可点击
+              'card_consult' // Key
+            )
           }
-          .layoutWeight(1.5) // 赋予权重，作为中间列
+          .layoutWeight(1.5)
+          .height('100%')
 
-          // --- B2. 右侧列：居家康养 + 家庭网络 + 可视对讲 (内容已完整补充)
-          Column() {
-            // 居家康养
-            Row() {
-              Button()
-              {
-                Row()
-                {
-                  Column()
-                  {
-                    Text($r('app.string.card_health_title'))
-                      .fontSize($r('app.float.font_size_normal'))
-                      .fontWeight(FontWeight.Bold)
-                      .fontColor($r('app.color.text_white'))
-                    Text($r('app.string.card_health_sleep'))
-                      .fontSize($r('app.float.font_size_large'))
-                      .fontWeight(FontWeight.Bold)
-                      .fontColor($r('app.color.text_white'))
-                    Text($r('app.string.card_health_value'))
-                      .fontSize($r('app.float.font_size_small'))
-                      .fontColor($r('app.color.text_gray'))
-                      .margin({ top: $r('app.float.margin_tiny') })
-                  }
-                  .backgroundColor($r('app.color.bg_card'))
-                  .borderRadius($r('app.float.radius_card'))
-                  .margin($r('app.float.margin_small'))
-                  .padding($r('app.float.margin_normal'))
-                  .width('100%')
-                  .layoutWeight(1)
+          // === B2. 右侧列 ===
+          Column({ space: 15 }) {
 
-                  Image($r('app.media.sleep_quality'))
-                    .width($r('app.float.image_health_size'))
-                    .height($r('app.float.image_health_size'))
-                    .borderRadius($r('app.float.radius_card'))
-                    .margin({ top: $r('app.float.margin_small') })
-                    .layoutWeight(1)
-                }
-              }
-              .backgroundColor($r('app.color.bg_card'))
+            // 4. 居家康养 (需跳转 -> card_health)
+            this.InfoCardBuilder(
+              $r('app.string.card_health_title'),
+              $r('app.string.card_health_sleep'),
+              '睡眠优',
+              $r('app.media.sleep_quality'), // 背景图
+              '100fp',
+              true,
+              'card_health'
+            )
 
-            }
-            .backgroundColor($r('app.color.bg_card'))
-            .borderRadius($r('app.float.radius_card'))
-            .margin($r('app.float.margin_small'))
-            .padding($r('app.float.margin_normal'))
-            .width('100%')
-            .layoutWeight(1)
 
             // 家庭网络
             Column() {
@@ -297,26 +247,42 @@ export struct MainPage {
             .layoutWeight(1)
 
             // 可视对讲
-            Column() {
+            Column({space:10}) {
               Text($r('app.string.card_intercom_title'))
                 .fontSize($r('app.float.font_size_normal'))
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_white'))
+                .padding(20)
 
-              Row({ space: $r('app.float.space_row') }) {
+              Row({ space: 30 }) {
                 Button() {
-                  Image($r('app.media.door_intercom'))
-                    .width($r('app.float.icon_normal'))
-                    .height($r('app.float.icon_normal'))
+                  Row({space:10})
+                  {
+                    Image($r('app.media.door_intercom'))
+                      .width($r('app.float.icon_normal'))
+                      .height($r('app.float.icon_normal'))
+                    Text("门禁对讲")
+                      .fontColor($r('app.color.text_white'))
+                      .fontSize($r('app.float.font_size_small'))
+
+                  }
                 }
                 .backgroundColor($r('app.color.bg_card'))
                 .borderRadius($r('app.float.radius_card'))
                 .margin($r('app.float.margin_tiny'))
 
                 Button() {
-                  Image($r('app.media.camera_monitor'))
-                    .width($r('app.float.icon_normal'))
-                    .height($r('app.float.icon_normal'))
+                  Row({space:10})
+                  {
+                    Image($r('app.media.camera_monitor'))
+                      .width($r('app.float.icon_normal'))
+                      .height($r('app.float.icon_normal'))
+                    Text("视频监视")
+                      .fontColor($r('app.color.text_white'))
+                      .fontSize($r('app.float.font_size_small'))
+
+                  }
+
                 }
                 .backgroundColor($r('app.color.bg_card'))
                 .borderRadius($r('app.float.radius_card'))
@@ -331,20 +297,86 @@ export struct MainPage {
             .width('100%')
             .layoutWeight(1)
           }
-          .layoutWeight(1.5) // 赋予权重，作为右侧列
-        }
-        .layoutWeight(3) // 右侧卡片区域占据主 Row 的大部分空间
-        .height('100%') // 确保卡片区域占满垂直空间
+          .layoutWeight(1.5)
+          .height('100%')
 
+        }
+        .layoutWeight(3)
+        .height('100%')
       }
       .width('100%')
-      .layoutWeight(1) // 内容区域占据剩余所有垂直空间
-      .padding($r('app.float.margin_small'))
+      .layoutWeight(1)
+      .padding($r('app.float.card_padding'))
     }
     .width('100%')
     .height('100%')
     .backgroundColor($r('app.color.bg_page'))
+    // 你的背景图
     .backgroundImage($r('app.media.bg'))
     .backgroundImageSize(ImageSize.Cover)
+  }
+
+  // --- 辅助构建函数：通用卡片 ---
+  // 这种写法可以极大减少重复代码，并且统一风格
+  @Builder InfoCardBuilder(title: Resource, subText: Resource | string, valueText: string, bgIcon: Resource | null, bgIconSize:string |null, isClickable: boolean, jumpKey?: string) {
+    // 1. 外层容器改为 Row，实现左右布局
+    Row() {
+
+      // --- 左半部分：文字区域 ---
+      Column() {
+        Text(title)
+          .fontSize($r('app.float.font_size_normal'))
+          .fontColor($r('app.color.text_white'))
+          .fontWeight(FontWeight.Bold)
+
+        // 数值和标题稍微拉开一点距离
+        Text(valueText)
+          .fontSize($r('app.float.font_size_large'))
+          .fontColor($r('app.color.text_white'))
+          .fontWeight(FontWeight.Bold)
+          .margin({ top: 8, bottom: 4 }) // 增加上下间距
+
+        if (subText) {
+          Text(subText)
+            .fontSize($r('app.float.font_size_small'))
+            .fontColor($r('app.color.text_gray'))
+        }
+      }
+      .layoutWeight(1) // 关键：占据左侧剩余空间
+      .height('100%')
+      .alignItems(HorizontalAlign.Start) // 文字左对齐
+      .justifyContent(FlexAlign.Center)  // 文字整体在垂直方向居中
+      .padding({ left: 10, right: 5 })   // 关键：给左边加 padding，别贴着边缘
+
+      // --- 右半部分：图片区域 ---
+      if (bgIcon) {
+        Column() {
+          Image(bgIcon)
+            .width(bgIconSize) // 设置合适的尺寸
+            .height(bgIconSize)
+            .objectFit(ImageFit.Contain)
+          // .fillColor(Color.White) // 如果是SVG且需要变白，请解开此注释
+        }
+        .layoutWeight(1) // 关键：占据右侧空间，与左侧平分或按比例分配
+        .height('100%')
+        .justifyContent(FlexAlign.Center) // 垂直居中
+        .alignItems(HorizontalAlign.Center) // 水平居中
+      } else {
+        // 如果没有图片，用空白占位或者让左侧撑满
+        Blank().layoutWeight(1)
+      }
+    }
+    // 卡片通用样式
+    .width('100%')
+    .layoutWeight(1) // 垂直方向均分
+    .backgroundColor($r('app.color.bg_card'))
+    .borderRadius($r('app.float.radius_card'))
+    .margin($r('app.float.margin_small'))
+    .padding($r('app.float.margin_normal')) // 卡片整体内边距
+    .onClick(() => {
+      if (isClickable && jumpKey) {
+        RouterHelper.jump(jumpKey);
+      }
+    })
   }
 }
