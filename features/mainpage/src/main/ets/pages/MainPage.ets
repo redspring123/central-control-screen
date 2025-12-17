@@ -9,8 +9,8 @@ export struct MainPage{
 
   // 保持你的数据结构不变
   private sceneList: btn[] = [
-    { key: 'btn_warm_home', icon: 'temp_home' },
-    { key: 'btn_safe_leave', icon: 'temp_home' },
+    { key: 'btn_warm_home', icon: 'login' },//将原来的temp_home改为进门login图标
+    { key: 'btn_safe_leave', icon: 'logout' },//将原来的temp_home改为出门logout图标
     { key: 'btn_full_temp', icon: 'full_temp' },
     { key: 'btn_dehumidify', icon: 'dehumidify' },
     { key: 'btn_ventilation', icon: 'ventilation' },
@@ -32,9 +32,11 @@ export struct MainPage{
           Image($r('app.media.home_icon'))
             .width(24).height(24)
             .opacity(this.showHome ? 1 : 0.5)
+            .fillColor(Color.White)//黑色图标反转颜色
           Image($r('app.media.sofa_icon'))
             .width(24).height(24)
             .opacity(this.showScene ? 1 : 0.5)
+            .fillColor(Color.White)//黑色图标反转颜色
         }.margin({ left: 20 })
       }
       .width('100%')
@@ -56,7 +58,7 @@ export struct MainPage{
                       .height($r('app.float.icon_inside_size'))
                       .objectFit(ImageFit.Contain)
                     // 如果你的PNG是黑色的，可以尝试反转颜色，或者保持原样，因为背景现在是半透明白，黑色也能看清
-                    // .fillColor(Color.White) // 如果是SVG解开此行
+                    //.fillColor(Color.White) // 如果是SVG解开此行
                   }
                   .width($r('app.float.icon_box_size'))
                   .height($r('app.float.icon_box_size'))
