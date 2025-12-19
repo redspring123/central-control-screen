@@ -1,16 +1,15 @@
 {
   "string": [
-    { "name": "wellness_title", "value": "居家康养中心" },
-    { "name": "btn_back_home", "value": "返回主页" },
-    { "name": "label_user_name", "value": "姓名: 高子航" },
-    { "name": "label_user_phone", "value": "电话: 17722827718" },
-    { "name": "label_user_age", "value": "男 | 28岁 | 神经内科" },
-    { "name": "label_hospital", "value": "广东省第二人民医院" },
+    { "name": "btn_back", "value": "返回主页" },
 
-    { "name": "status_fall_detect", "value": "未摔倒" },
-    { "name": "status_bed_status", "value": "离床" },
-    { "name": "env_light", "value": "光照: 13Lx" },
-    { "name": "env_co2", "value": "CO2: 1305ppm" },
+    { "name": "user_name_full", "value": "姓名: 高子航" },
+    { "name": "user_phone", "value": "电话: 17722827718" },
+    { "name": "user_id", "value": "ID: 403-A" },
+    { "name": "user_info_detail", "value": "高子航 | 男 | 28岁" },
+    { "name": "user_dept", "value": "入住: 神经内科" },
+    { "name": "user_hospital", "value": "广东省第二人民医院" },
+
+    { "name": "btn_call_one_key", "value": "一键呼叫" },
 
     { "name": "menu_record", "value": "健康档案" },
     { "name": "menu_vital", "value": "体征监测" },
@@ -21,8 +20,6 @@
     { "name": "menu_drug", "value": "用药咨询" },
     { "name": "menu_order", "value": "订单管理" },
     { "name": "menu_rehab", "value": "帕金森康复" },
-    { "name": "menu_more", "value": "更多功能" },
-
-    { "name": "btn_call_emergency", "value": "一键呼叫" }
+    { "name": "menu_more", "value": "更多功能" }
   ]
 }

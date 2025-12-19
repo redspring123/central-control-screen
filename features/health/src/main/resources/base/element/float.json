@@ -1,41 +1,31 @@
 {
   "float": [
     { "name": "page_padding", "value": "20vp" },
-
     { "name": "header_height", "value": "60vp" },
-    { "name": "header_icon_size", "value": "20vp" },
-    { "name": "header_avatar_size", "value": "60vp" },
 
-    { "name": "layout_space_row", "value": "20vp" },
-    { "name": "layout_space_col", "value": "20vp" },
-    { "name": "layout_space_grid", "value": "10vp" },
+    { "name": "card_radius", "value": "16vp" },
+    { "name": "bubble_size", "value": "90vp" },
+    { "name": "bubble_radius", "value": "45vp" },
 
-    { "name": "card_padding", "value": "20vp" },
-    { "name": "card_radius_norm", "value": "12vp" },
-    { "name": "card_radius_large", "value": "16vp" },
-
-    { "name": "text_mini", "value": "10fp" },
+    { "name": "text_norm", "value": "16fp" },
+    { "name": "text_large", "value": "24fp" },
+    { "name": "text_xlarge", "value": "32fp" },
     { "name": "text_small", "value": "12fp" },
-    { "name": "text_normal", "value": "14fp" },
-    { "name": "text_medium", "value": "16fp" },
-    { "name": "text_large", "value": "18fp" },
-    { "name": "text_xlarge", "value": "20fp" },
-    { "name": "text_huge", "value": "30fp" },
+    { "name": "text_title", "value": "20fp" },
 
-    { "name": "icon_menu_bg_size", "value": "60vp" },
-    { "name": "icon_menu_img_size", "value": "32vp" },
-    { "name": "icon_status_size", "value": "24vp" },
-    { "name": "icon_call_size", "value": "40vp" },
+    { "name": "icon_size_menu", "value": "40vp" },
+    { "name": "icon_size_header", "value": "24vp" },
+    { "name": "icon_size_call", "value": "40vp" },
 
-    { "name": "btn_call_height", "value": "120vp" },
-
-    { "name": "tag_offset_x1", "value": "-100vp" },
-    { "name": "tag_offset_y1", "value": "-120vp" },
-    { "name": "tag_offset_x2", "value": "100vp" },
-    { "name": "tag_offset_y2", "value": "-80vp" },
-    { "name": "tag_offset_x3", "value": "-110vp" },
-    { "name": "tag_offset_y3", "value": "50vp" },
-    { "name": "tag_offset_x4", "value": "-90vp" },
-    { "name": "tag_offset_y4", "value": "150vp" }
+    { "name": "bubble_pos_x1", "value": "-120vp" },
+    { "name": "bubble_pos_y1", "value": "-100vp" },
+    { "name": "bubble_pos_x2", "value": "80vp" },
+    { "name": "bubble_pos_y2", "value": "-120vp" },
+    { "name": "bubble_pos_x3", "value": "-140vp" },
+    { "name": "bubble_pos_y3", "value": "20vp" },
+    { "name": "bubble_pos_x4", "value": "120vp" },
+    { "name": "bubble_pos_y4", "value": "50vp" },
+    { "name": "bubble_pos_x5", "value": "-20vp" },
+    { "name": "bubble_pos_y5", "value": "140vp" }
   ]
 }
