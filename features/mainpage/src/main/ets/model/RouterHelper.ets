@@ -33,7 +33,21 @@ export class RouterHelper {
         return;
 
       case 'btn_sport_health': // 运动健康
-        promptAction.showToast({ message: '正在前往运动健康...' });
+        // 导航到 health 模块下的运动页（已在 SportsPage 中声明 routeName）
+        try {
+          router.pushNamedRoute({
+            name: 'HealthSportsPage',
+            params: params
+          }, router.RouterMode.Single, (err) => {
+            if (err) {
+              console.error(`跳转失败: ${err.code}, ${err.message}`);
+              try { promptAction.showToast({ message: `跳转失败: ${err.message}` }); } catch (e) { console.error('showToast failed', e); }
+            }
+          });
+        } catch (e) {
+          console.error('router.pushNamedRoute threw', e);
+          try { promptAction.showToast({ message: '跳转失败' }); } catch (err) { console.error('showToast failed', err); }
+        }
         return;
 
       case 'btn_one_key_call': // 一键呼叫

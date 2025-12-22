@@ -20,6 +20,13 @@
     { "name": "menu_drug", "value": "用药咨询" },
     { "name": "menu_order", "value": "订单管理" },
     { "name": "menu_rehab", "value": "帕金森康复" },
-    { "name": "menu_more", "value": "更多功能" }
+    { "name": "menu_more", "value": "更多功能" },
+
+
+    { "name": "sport_record", "value": "运动记录"},
+    { "name": "kcal_label", "value": "热量消耗"},
+    { "name": "steps_label", "value": "步数"},
+    { "name": "record_start", "value":"开始记录"}
+
   ]
 }
