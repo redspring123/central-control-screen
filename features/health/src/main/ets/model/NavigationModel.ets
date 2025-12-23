@@ -16,8 +16,21 @@ export class NavigationModel {
         promptAction.showToast({ message: '正在呼叫管理中心...', duration: 2000 });
         break;
       case 'card_consult':
-        promptAction.showToast({ message: '正在前往在线问诊...' });
-        // targetUrl = 'pages/ConsultPage';
+        // 跳转到在线问诊页面
+        try {
+          router.pushNamedRoute({
+            name: 'MedicalOnlineConsultPage',
+            params: params
+          }, router.RouterMode.Single, (err) => {
+            if (err) {
+              console.error(`跳转失败: ${err.code}, ${err.message}`);
+              try { promptAction.showToast({ message: `跳转失败: ${err.message}` }); } catch (e) { console.error('showToast failed', e); }
+            }
+          });
+        } catch (e) {
+          console.error('router.pushNamedRoute threw', e);
+          try { promptAction.showToast({ message: '跳转失败' }); } catch (err) { console.error('showToast failed', err); }
+        }
         break;
       case 'btn_sport_health':
         // 从健康模块内部跳转到运动健康页（使用命名路由）

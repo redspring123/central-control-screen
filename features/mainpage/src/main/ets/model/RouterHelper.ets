@@ -3,6 +3,7 @@ import promptAction from '@ohos.promptAction';
 
 
 import 'health';
+import 'medical';
 
 export class RouterHelper {
 
@@ -29,7 +30,20 @@ export class RouterHelper {
         return; // 必须 return，防止继续执行下面的逻辑
 
       case 'card_consult': // 在线咨询
-        promptAction.showToast({ message: '正在前往在线问诊...' });
+        try {
+          router.pushNamedRoute({
+            name: 'MedicalOnlineConsultPage',
+            params: params
+          }, router.RouterMode.Single, (err) => {
+            if (err) {
+              console.error(`跳转失败: ${err.code}, ${err.message}`);
+              try { promptAction.showToast({ message: `跳转失败: ${err.message}` }); } catch (e) { console.error('showToast failed', e); }
+            }
+          });
+        } catch (e) {
+          console.error('router.pushNamedRoute threw', e);
+          try { promptAction.showToast({ message: '跳转失败' }); } catch (err) { console.error('showToast failed', err); }
+        }
         return;
 
       case 'btn_sport_health': // 运动健康

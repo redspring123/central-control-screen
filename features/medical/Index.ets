@@ -1,1 +1,2 @@
-export { MainPage } from './src/main/ets/components/MainPage';
+export { OnlineConsultPage } from './src/main/ets/pages/OnlineConsult';
+

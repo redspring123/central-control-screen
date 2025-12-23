@@ -1,0 +1,22 @@
+{
+  "color": [
+    { "name": "bg_page", "value": "#FF1FD6BF" },
+    { "name": "bg_card", "value": "#16021A26" },
+    { "name": "bg_header", "value": "#007DFF" },
+    { "name": "bg_primary", "value": "#007DFF" },
+    { "name": "bg_accent", "value": "#FF6B35" },
+    { "name": "text_white", "value": "#FFFFFF" },
+    { "name": "text_gray", "value": "#AAAAAA" },
+    { "name": "text_primary", "value": "#333333" },
+    { "name": "text_red", "value": "#FF4444" },
+    { "name": "text_green", "value": "#4CAF50" },
+    { "name": "text_blue", "value": "#2196F3" },
+    { "name": "primary", "value": "#007DFF" },
+    { "name": "secondary", "value": "#FF6B35" },
+    { "name": "btn_green", "value": "#4CAF50" },
+    { "name": "btn_red", "value": "#F44336" },
+    { "name": "btn_blue", "value": "#2196F3" },
+    { "name": "bg_icon_container", "value": "#1AFFFFFF" },
+    { "name": "bg_icon_container_active", "value": "#33FFFFFF" }
+  ]
+}
