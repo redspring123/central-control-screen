@@ -6,6 +6,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "health": "file:../../features/health"
+    "health": "file:../../features/health",
+    "medical": "file:../../features/medical"
   }
 }

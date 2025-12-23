@@ -3,6 +3,42 @@
     {
       "name": "page_show",
       "value": "page from package"
+    },
+    {
+      "name": "online_consult_title",
+      "value": "在线问诊"
+    },
+    {
+      "name": "consult_doctor_name",
+      "value": "张医生"
+    },
+    {
+      "name": "consult_doctor_department",
+      "value": "心内科"
+    },
+    {
+      "name": "consult_doctor_title",
+      "value": "主任医师"
+    },
+    {
+      "name": "consult_doctor_intro",
+      "value": "从事心血管疾病临床工作15年，擅长高血压、冠心病等。"
+    },
+    {
+      "name": "consult_type_text",
+      "value": "图文问诊"
+    },
+    {
+      "name": "consult_type_video",
+      "value": "视频问诊"
+    },
+    {
+      "name": "consult_fee",
+      "value": "¥50"
+    },
+    {
+      "name": "consult_rating",
+      "value": "评分 4.8"
     }
   ]
 }
