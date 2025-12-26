@@ -1,4 +1,8 @@
 // features/health/src/main/ets/model/SportsDataModel.ets
+export class DatabaseResult {
+  sports: TodaySportsData | null = null;
+  health: HealthData | null = null;
+}
 
 export class TodaySportsData {
   steps: StepsData = new StepsData();
