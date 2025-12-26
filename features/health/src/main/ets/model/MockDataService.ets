@@ -34,9 +34,9 @@ export class MockDataService {
     sportsData.steps.current = Math.floor(sportsData.steps.distance * 1500);
 
     sportsData.calories = new CaloriesData();
-    sportsData.calories.goal = 1200;
-    sportsData.calories.current = Math.floor(sportsData.steps.current * 0.1);
-
+    sportsData.calories.goal = 500;
+    const kcalPerStep = 0.03 + Math.random() * 0.02;
+    sportsData.calories.current = Math.floor(sportsData.steps.current * kcalPerStep);
     return sportsData;
   }
 
@@ -86,7 +86,8 @@ export class MockDataService {
     const baseSteps: number = Math.floor(Date.now() / 10000) % 10000;
     const steps: number = baseSteps + getRandomInt(0, 50);
 
-    const calories: number = Math.floor(steps * 0.1) + getRandomInt(0, 20);
+    const kcalPerStep = 0.03 + Math.random() * 0.02;
+    const calories: number = Math.floor(steps * kcalPerStep);
 
     const temperature: number = getRandomFloat(36.1, 37.0, 1);
 

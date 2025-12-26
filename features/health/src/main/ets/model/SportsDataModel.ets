@@ -17,7 +17,7 @@ export class StepsData {
 
 export class CaloriesData {
   current: number = 0;
-  goal: number = 1200;
+  goal: number = 500;
   unit: string = '卡路里';
 }
 
