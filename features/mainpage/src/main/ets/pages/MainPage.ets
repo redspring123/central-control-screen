@@ -1,5 +1,10 @@
 import { btn } from '../model/btn' // 保持你的引用
 import { RouterHelper } from '../model/RouterHelper' //
+import router from '@ohos.router';
+import { PromptAction } from '@kit.ArkUI';
+// 引入命名路由页面，确保路由注册生效
+import 'medical/src/main/ets/pages/CallPage';
+import 'health/src/main/ets/page/WellnessPage';
 
 @Entry
 @Component
@@ -18,6 +23,44 @@ export struct MainPage{
     { key: 'btn_one_key_call', icon: 'ventilation' }, // 需跳转
     { key: 'btn_sport_health', icon: 'foreground' }   // 需跳转
   ];
+
+  // 处理点击事件
+  private handleItemClick(key: string) {
+    if (key === 'btn_one_key_call') {
+      // 1. 弹窗确认
+      let uiContext = this.getUIContext();
+      let promptAction: PromptAction = uiContext.getPromptAction();
+      
+      try {
+        promptAction.showDialog({
+          title: '一键呼叫',
+          message: '是否立即呼叫家庭医生？',
+          buttons: [
+            { text: '取消', color: '#8E8E93' },
+            { text: '立即呼叫', color: '#FF3B30' }
+          ]
+        }, (err, data) => {
+          if (err) {
+            console.error('showDialog err: ' + err);
+            return;
+          }
+          // 点击了第二个按钮 (索引为1)
+          if (data.index === 1) {
+            // 跳转到通话界面 (使用命名路由)
+            router.pushNamedRoute({ name: 'CallPage' });
+          }
+        });
+      } catch (error) {
+        console.error('showDialog error: ' + error);
+      }
+    } else if (key === 'btn_sport_health') {
+      // 2. 跳转到运动健康/居家康养 (使用命名路由)
+      router.pushNamedRoute({ name: 'HealthWellnessPage' });
+    } else {
+      // 其他按钮逻辑
+      RouterHelper.jump(key);
+    }
+  }
 
   build() {
     Column() {
@@ -86,7 +129,7 @@ export struct MainPage{
               .height(80)
               // 绑定点击事件，处理跳转
               .onClick(() => {
-                RouterHelper.jump(item.key);
+                this.handleItemClick(item.key);
               })
             }
           }, (item: btn) => item.key)
