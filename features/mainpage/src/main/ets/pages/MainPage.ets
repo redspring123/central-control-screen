@@ -25,6 +25,11 @@ export struct MainPage{
   aboutToAppear() {
     // 初始加载
     this.refreshData();
+    
+    // 同步系统当前的深浅模式状态
+    let colorMode = this.context.config.colorMode;
+    this.isDarkMode = (colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
+
     // 定时刷新，模拟实时数据变化
     this.timerId = setInterval(() => {
       this.refreshData();
@@ -76,11 +81,7 @@ export struct MainPage{
     Column() {
       // 1. 顶部导航栏 (保持原样，微调间距)
       Row() {
-        Text("08:08") // 假设这是时间占位
-          .fontSize($r('app.float.font_size_large'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_white'))
-
+        // 左侧时间已移除，使用系统状态栏时间
         Blank()
 
         Row({ space: 15 }) {
@@ -97,7 +98,12 @@ export struct MainPage{
             Image(this.isDarkMode ? $r('app.media.ic_sun') : $r('app.media.ic_moon'))
               .width(24)
               .height(24)
-              .fillColor(Color.White) // 保持白色风格
+              .colorFilter([
+                0, 0, 0, 0, 255,
+                0, 0, 0, 0, 255,
+                0, 0, 0, 0, 255,
+                0, 0, 0, 1, 0
+              ]) // 强制变白
           }
           .type(ButtonType.Normal) // 去掉默认圆角背景
           .backgroundColor(Color.Transparent) // 透明背景
@@ -148,7 +154,11 @@ export struct MainPage{
                 .justifyContent(FlexAlign.Start)
               }
               .type(ButtonType.Normal)
-              .backgroundColor($r('app.color.bg_card'))
+              // .backgroundColor($r('app.color.bg_card')) // 原来的背景色
+              // 修改为：动态半透明背景 + 毛玻璃效果
+              .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+              .backdropBlur(20) // 核心：背景模糊
+              .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }) // 增加淡淡的边框，提升质感
               .borderRadius($r('app.float.radius_card'))
               .width('100%')
               .height(80)
@@ -192,7 +202,11 @@ export struct MainPage{
                 .fontColor($r('app.color.text_gray'))
                 .margin({ top: $r('app.float.margin_tiny') })
             }
-            .backgroundColor($r('app.color.bg_card'))
+            // .backgroundColor($r('app.color.bg_card')) // 原来的背景色
+            // 修改为：动态半透明背景 + 毛玻璃效果
+            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+            .backdropBlur(20)
+            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
             .borderRadius($r('app.float.radius_card'))
             .margin($r('app.float.margin_small'))
             .padding($r('app.float.margin_normal'))
@@ -235,7 +249,10 @@ export struct MainPage{
               }
               .justifyContent(FlexAlign.Center)
             }
-            .backgroundColor($r('app.color.bg_card'))
+            // 修改为：动态半透明背景 + 毛玻璃效果
+            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+            .backdropBlur(20)
+            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
             .borderRadius($r('app.float.radius_card'))
             .margin($r('app.float.margin_small'))
             .padding($r('app.float.margin_normal'))
@@ -250,7 +267,8 @@ export struct MainPage{
               $r('app.media.video_call'), // 背景大图标
               '60fp',
               true, // 可点击
-              'card_consult' // Key
+              'card_consult', // Key
+              Color.Green // 传入绿色
             )
           }
           .layoutWeight(1.5)
@@ -302,6 +320,7 @@ export struct MainPage{
                   Image($r('app.media.network_speed'))
                     .width($r('app.float.icon_large'))
                     .height($r('app.float.icon_large'))
+                    .fillColor('#ff379ee0') // 浅蓝色
                 }
                 .width('90%')
                 .justifyContent(FlexAlign.SpaceBetween)
@@ -311,9 +330,12 @@ export struct MainPage{
               }
               .width('100%')
               .height('100%')
-              .backgroundColor($r('app.color.bg_card'))
+              .backgroundColor(Color.Transparent) // 按钮背景透明，由外层 Column 控制
             }
-            .backgroundColor($r('app.color.bg_card'))
+            // 修改为：动态半透明背景 + 毛玻璃效果
+            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+            .backdropBlur(20)
+            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
             .borderRadius($r('app.float.radius_card'))
             .margin($r('app.float.margin_small'))
             .padding($r('app.float.margin_normal'))
@@ -341,7 +363,7 @@ export struct MainPage{
 
                   }
                 }
-                .backgroundColor($r('app.color.bg_card'))
+                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)') // 内部按钮也稍微透明一点
                 .borderRadius($r('app.float.radius_card'))
                 .margin($r('app.float.margin_tiny'))
 
@@ -358,13 +380,16 @@ export struct MainPage{
                   }
 
                 }
-                .backgroundColor($r('app.color.bg_card'))
+                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)') // 内部按钮也稍微透明一点
                 .borderRadius($r('app.float.radius_card'))
                 .margin($r('app.float.margin_tiny'))
               }
               .justifyContent(FlexAlign.Center)
             }
-            .backgroundColor($r('app.color.bg_card'))
+            // 修改为：动态半透明背景 + 毛玻璃效果
+            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+            .backdropBlur(20)
+            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
             .borderRadius($r('app.float.radius_card'))
             .margin($r('app.float.margin_small'))
             .padding($r('app.float.margin_normal'))
@@ -392,7 +417,7 @@ export struct MainPage{
 
   // --- 辅助构建函数：通用卡片 ---
   // 这种写法可以极大减少重复代码，并且统一风格
-  @Builder InfoCardBuilder(title: Resource, subText: Resource | string, valueText: string, bgIcon: Resource | null, bgIconSize:string |null, isClickable: boolean, jumpKey?: string) {
+  @Builder InfoCardBuilder(title: Resource, subText: Resource | string, valueText: string, bgIcon: Resource | null, bgIconSize:string |null, isClickable: boolean, jumpKey?: string, iconColor?: ResourceColor) {
     // 1. 外层容器改为 Row，实现左右布局
     Row() {
 
@@ -429,6 +454,7 @@ export struct MainPage{
             .width(bgIconSize) // 设置合适的尺寸
             .height(bgIconSize)
             .objectFit(ImageFit.Contain)
+            .fillColor(iconColor) // 如果传入了颜色，则应用
           // .fillColor(Color.White) // 如果是SVG且需要变白，请解开此注释
         }
         .layoutWeight(1) // 关键：占据右侧空间，与左侧平分或按比例分配
@@ -443,7 +469,10 @@ export struct MainPage{
     // 卡片通用样式
     .width('100%')
     .layoutWeight(1) // 垂直方向均分
-    .backgroundColor($r('app.color.bg_card'))
+    // 修改为：动态半透明背景 + 毛玻璃效果
+    .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+    .backdropBlur(20)
+    .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
     .borderRadius($r('app.float.radius_card'))
     .margin($r('app.float.margin_small'))
     .padding($r('app.float.margin_normal')) // 卡片整体内边距
