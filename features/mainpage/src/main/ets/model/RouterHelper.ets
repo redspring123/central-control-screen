@@ -1,6 +1,6 @@
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
-
+import call from '@ohos.telephony.call';
 
 import 'health';
 import 'medical';
@@ -79,14 +79,21 @@ export class RouterHelper {
               return;
             }
             if (data.index === 1) {
-              // 跳转到通话界面
-              router.pushNamedRoute({
-                name: 'CallPage',
-                params: params
-              }, router.RouterMode.Single, (err) => {
+              promptAction.showToast({ message: '正在呼叫家庭医生...', duration: 2000 });
+              // 尝试使用系统拨号
+              call.makeCall('13800000000', (err) => {
                 if (err) {
-                  console.error(`跳转失败: ${err.code}, ${err.message}`);
-                  promptAction.showToast({ message: `跳转失败: ${err.message}` });
+                  console.error('makeCall fail, err: ' + JSON.stringify(err));
+                  // 如果系统拨号失败（如无sim卡），则跳转到模拟页面
+                  router.pushNamedRoute({
+                    name: 'CallPage',
+                    params: params
+                  }, router.RouterMode.Single, (err) => {
+                    if (err) {
+                      console.error(`跳转失败: ${err.code}, ${err.message}`);
+                      promptAction.showToast({ message: `跳转失败: ${err.message}` });
+                    }
+                  });
                 }
               });
             }

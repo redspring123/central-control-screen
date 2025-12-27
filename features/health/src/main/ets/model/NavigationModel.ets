@@ -28,13 +28,20 @@ export class NavigationModel {
               return;
             }
             if (data.index === 1) {
-              // 跳转到通话界面
-              try {
-                router.pushNamedRoute({ name: 'CallPage' });
-              } catch (e) {
-                console.error('pushNamedRoute CallPage failed', e);
-                promptAction.showToast({ message: '跳转失败，请检查路由配置' });
-              }
+              promptAction.showToast({ message: '正在呼叫家庭医生...', duration: 2000 });
+              // 尝试使用系统拨号
+              call.makeCall('13800000000', (err) => {
+                if (err) {
+                  console.error('makeCall fail, err: ' + JSON.stringify(err));
+                  // 如果系统拨号失败（如无sim卡），则跳转到模拟页面
+                  try {
+                    router.pushNamedRoute({ name: 'CallPage' });
+                  } catch (e) {
+                    console.error('pushNamedRoute CallPage failed', e);
+                    promptAction.showToast({ message: '跳转失败，请检查路由配置' });
+                  }
+                }
+              });
             }
           });
         } catch (error) {
