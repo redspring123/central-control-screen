@@ -8,6 +8,8 @@ import { HomeDataService, EnergyData, NetworkData } from '../model/HomeDataServi
 import 'medical/src/main/ets/pages/CallPage';
 import 'health/src/main/ets/page/WellnessPage';
 
+import { common, ConfigurationConstant } from '@kit.AbilityKit';
+
 @Entry
 @Component
 export struct MainPage{
@@ -16,6 +18,9 @@ export struct MainPage{
   @State energyData: EnergyData = { power: 0, todayUsage: 0, carbon: 0 };
   @State networkData: NetworkData = { uploadSpeed: '0 Mbps', downloadSpeed: '0 Mbps', quality: '良' };
   private timerId: number = -1;
+
+  private context = getContext(this) as common.UIAbilityContext;
+  @State isDarkMode: boolean = false;
 
   aboutToAppear() {
     // 初始加载
@@ -35,6 +40,19 @@ export struct MainPage{
   refreshData() {
     this.energyData = HomeDataService.getEnergyData();
     this.networkData = HomeDataService.getNetworkData();
+  }
+  //切换主题
+  toggleTheme() {
+    this.isDarkMode = !this.isDarkMode;
+    let applicationContext = this.context.getApplicationContext();
+
+    if (this.isDarkMode) {
+      // 切换到深色模式 (这也将通知其他模块切换到 dark 资源)
+      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
+    } else {
+      // 切换到浅色模式
+      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT);
+    }
   }
 
   // 保持你的数据结构不变
@@ -63,6 +81,8 @@ export struct MainPage{
           .fontWeight(FontWeight.Bold)
           .fontColor($r('app.color.text_white'))
 
+        Blank()
+
         Row({ space: 15 }) {
           Image($r('app.media.home_icon'))
             .width(24).height(24)
@@ -72,8 +92,21 @@ export struct MainPage{
             .width(24).height(24)
             .opacity(this.showScene ? 1 : 0.5)
             .fillColor(Color.White)//黑色图标反转颜色
+          Button() {
+
+            Image(this.isDarkMode ? $r('app.media.ic_sun') : $r('app.media.ic_moon'))
+              .width(24)
+              .height(24)
+              .fillColor(Color.White) // 保持白色风格
+          }
+          .type(ButtonType.Normal) // 去掉默认圆角背景
+          .backgroundColor(Color.Transparent) // 透明背景
+          .onClick(() => {
+            this.toggleTheme(); // 绑定点击事件
+          })
         }.margin({ left: 20 })
       }
+      .backgroundColor($r('app.color.top'))
       .width('100%')
       .padding({ left: 20, right: 20, top: 15, bottom: 15 })
 
@@ -127,10 +160,14 @@ export struct MainPage{
           }, (item: btn) => item.key)
         }
         .columnsTemplate('1fr 1fr')
-        .rowsGap(12)
+        .rowsGap(35)
         .columnsGap(12)
         .layoutWeight(1.2)
         .height('100%')
+        .margin({
+          top: $r('app.float.margin_normal'),
+
+        })
 
         // --- B. 中间 + 右侧：卡片区域 ---
         Row({ space: 15 }) {
