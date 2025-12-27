@@ -2,6 +2,8 @@ import { btn } from '../model/btn' // 保持你的引用
 import { RouterHelper } from '../model/RouterHelper' //
 import router from '@ohos.router';
 import { PromptAction } from '@kit.ArkUI';
+import call from '@ohos.telephony.call';
+import { HomeDataService, EnergyData, NetworkData } from '../model/HomeDataService';
 // 引入命名路由页面，确保路由注册生效
 import 'medical/src/main/ets/pages/CallPage';
 import 'health/src/main/ets/page/WellnessPage';
@@ -11,6 +13,29 @@ import 'health/src/main/ets/page/WellnessPage';
 export struct MainPage{
   @State showHome: boolean = true;
   @State showScene: boolean = false;
+  @State energyData: EnergyData = { power: 0, todayUsage: 0, carbon: 0 };
+  @State networkData: NetworkData = { uploadSpeed: '0 Mbps', downloadSpeed: '0 Mbps', quality: '良' };
+  private timerId: number = -1;
+
+  aboutToAppear() {
+    // 初始加载
+    this.refreshData();
+    // 定时刷新，模拟实时数据变化
+    this.timerId = setInterval(() => {
+      this.refreshData();
+    }, 3000);
+  }
+
+  aboutToDisappear() {
+    if (this.timerId !== -1) {
+      clearInterval(this.timerId);
+    }
+  }
+
+  refreshData() {
+    this.energyData = HomeDataService.getEnergyData();
+    this.networkData = HomeDataService.getNetworkData();
+  }
 
   // 保持你的数据结构不变
   private sceneList: btn[] = [
@@ -46,8 +71,15 @@ export struct MainPage{
           }
           // 点击了第二个按钮 (索引为1)
           if (data.index === 1) {
-            // 跳转到通话界面 (使用命名路由)
-            router.pushNamedRoute({ name: 'CallPage' });
+            promptAction.showToast({ message: '正在呼叫家庭医生...' });
+            // 尝试使用系统拨号
+            call.makeCall('13800000000', (err) => {
+               if (err) {
+                 console.error('makeCall fail, err: ' + JSON.stringify(err));
+                 // 如果系统拨号失败（如无sim卡），则跳转到模拟页面
+                 router.pushNamedRoute({ name: 'CallPage' });
+               }
+            });
           }
         });
       } catch (error) {
@@ -151,14 +183,14 @@ export struct MainPage{
                 .fontSize($r('app.float.font_size_normal'))
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_white'))
-              Text($r('app.string.card_energy_power'))
+              Text(`${this.energyData.todayUsage} kWh`)
                 .fontSize($r('app.float.font_size_xlarge'))
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_white'))
               Text($r('app.string.card_energy_today'))
                 .fontSize($r('app.float.font_size_small'))
                 .fontColor($r('app.color.text_gray'))
-              Text($r('app.string.card_energy_carbon'))
+              Text(`本月碳排放量: ${this.energyData.carbon} kg`)
                 .fontSize($r('app.float.font_size_small'))
                 .fontColor($r('app.color.text_gray'))
                 .margin({ top: $r('app.float.margin_tiny') })
@@ -254,14 +286,14 @@ export struct MainPage{
                       .fontSize($r('app.float.font_size_normal'))
                       .fontWeight(FontWeight.Bold)
                       .fontColor($r('app.color.text_white'))
-                    Text($r('app.string.card_network_quality'))
+                    Text(this.networkData.quality)
                       .fontSize($r('app.float.font_size_large'))
                       .fontWeight(FontWeight.Bold)
                       .fontColor($r('app.color.text_white'))
-                    Text($r('app.string.card_network_speed_up'))
+                    Text(`↑ ${this.networkData.uploadSpeed}`)
                       .fontSize($r('app.float.font_size_small'))
                       .fontColor($r('app.color.text_gray'))
-                    Text($r('app.string.card_network_speed_down'))
+                    Text(`↓ ${this.networkData.downloadSpeed}`)
                       .fontSize($r('app.float.font_size_small'))
                       .fontColor($r('app.color.text_gray'))
                       .margin({ top: $r('app.float.margin_tiny') })
