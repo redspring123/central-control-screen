@@ -51,47 +51,7 @@ export struct MainPage{
 
   // 处理点击事件
   private handleItemClick(key: string) {
-    if (key === 'btn_one_key_call') {
-      // 1. 弹窗确认
-      let uiContext = this.getUIContext();
-      let promptAction: PromptAction = uiContext.getPromptAction();
-      
-      try {
-        promptAction.showDialog({
-          title: '一键呼叫',
-          message: '是否立即呼叫家庭医生？',
-          buttons: [
-            { text: '取消', color: '#8E8E93' },
-            { text: '立即呼叫', color: '#FF3B30' }
-          ]
-        }, (err, data) => {
-          if (err) {
-            console.error('showDialog err: ' + err);
-            return;
-          }
-          // 点击了第二个按钮 (索引为1)
-          if (data.index === 1) {
-            promptAction.showToast({ message: '正在呼叫家庭医生...' });
-            // 尝试使用系统拨号
-            call.makeCall('13800000000', (err) => {
-               if (err) {
-                 console.error('makeCall fail, err: ' + JSON.stringify(err));
-                 // 如果系统拨号失败（如无sim卡），则跳转到模拟页面
-                 router.pushNamedRoute({ name: 'CallPage' });
-               }
-            });
-          }
-        });
-      } catch (error) {
-        console.error('showDialog error: ' + error);
-      }
-    } else if (key === 'btn_sport_health') {
-      // 2. 跳转到运动健康/居家康养 (使用命名路由)
-      router.pushNamedRoute({ name: 'HealthWellnessPage' });
-    } else {
-      // 其他按钮逻辑
-      RouterHelper.jump(key);
-    }
+    RouterHelper.jump(key);
   }
 
   build() {

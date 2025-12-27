@@ -38,7 +38,7 @@ export struct CallPage {
       Column() {
         // 顶部：医生信息
         Column({ space: 10 }) {
-          Image($r('app.media.icon_nurse')) // 假设有个医生/护士头像，如果没有请替换为 app.media.app_icon
+          Image($r('app.media.icon_nurse')) // 医生/护士头像
             .width(100)
             .height(100)
             .borderRadius(50)
@@ -68,7 +68,7 @@ export struct CallPage {
         Row() {
           Column() {
             Button() {
-              Image($r('app.media.icon_call_large')) // 这里应该放挂断图标，暂时用头像代替或画个红圆
+              Image($r('app.media.icon_call_large')) // 挂断图标
                 .width(30)
                 .height(30)
             }
