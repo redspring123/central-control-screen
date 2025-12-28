@@ -1,3 +1,3 @@
 
 export { WellnessPage } from './src/main/ets/page/WellnessPage';
-export { SportsPage } from './src/main/ets/page/HealthSportsPage';
+export { HealthSportsPage } from './src/main/ets/page/HealthSportsPage';
