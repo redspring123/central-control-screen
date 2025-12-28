@@ -119,65 +119,134 @@ export struct MainPage{
       // 2. 内容区域
       Row({ space: 15 }) {
 
-        // --- A. 左侧：8个场景按钮 (优化版) ---
-        Grid() {
-          ForEach(this.sceneList, (item: btn) => {
-            GridItem() {
-              Button() {
-                Row() {
-                  // 1. 图标容器 (Icon Box) - 解决图标看不清的问题
-                  Column() {
-                    Image($r(`app.media.${item.icon}`))
-                      .width($r('app.float.icon_inside_size'))
-                      .height($r('app.float.icon_inside_size'))
-                      .objectFit(ImageFit.Contain)
-                    // 如果你的PNG是黑色的，可以尝试反转颜色，或者保持原样，因为背景现在是半透明白，黑色也能看清
-                    //.fillColor(Color.White) // 如果是SVG解开此行
+
+        // --- A. 左侧区域：Grid + 天气组件 ---
+        Column({ space: 5 }) {
+
+          // === 上半部分：8个场景按钮 ===
+          Grid() {
+            ForEach(this.sceneList, (item: btn) => {
+              GridItem() {
+                Button() {
+                  Row() {
+                    // 图标容器
+                    Column() {
+                      Image($r(`app.media.${item.icon}`))
+                        .width($r('app.float.icon_inside_size'))
+                        .height($r('app.float.icon_inside_size'))
+                        .objectFit(ImageFit.Contain)
+                    }
+                    .width($r('app.float.icon_box_size'))
+                    .height($r('app.float.icon_box_size'))
+                    .backgroundColor($r('app.color.bg_icon_container'))
+                    .borderRadius(10)
+                    .justifyContent(FlexAlign.Center)
+                    .alignItems(HorizontalAlign.Center)
+                    .margin({ right: 12 })
+
+                    // 文字
+                    Text($r(`app.string.${item.key}`))
+                      .fontSize($r('app.float.font_size_normal'))
+                      .fontColor($r('app.color.text_white'))
+                      .fontWeight(FontWeight.Medium)
+                      .layoutWeight(1)
                   }
-                  .width($r('app.float.icon_box_size'))
-                  .height($r('app.float.icon_box_size'))
-                  .backgroundColor($r('app.color.bg_icon_container')) // 半透明背景
-                  .borderRadius(10)
-                  .justifyContent(FlexAlign.Center)
-                  .alignItems(HorizontalAlign.Center)
-                  .margin({ right: 12 })
-
-                  // 2. 文字
-                  Text($r(`app.string.${item.key}`))
-                    .fontSize($r('app.float.font_size_normal'))
-                    .fontColor($r('app.color.text_white'))
-                    .fontWeight(FontWeight.Medium)
-                    .layoutWeight(1)
+                  .width('100%')
+                  .padding(10)
+                  .justifyContent(FlexAlign.Start)
                 }
+                .type(ButtonType.Normal)
+                // 样式保持统一
+                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+                .backdropBlur(20)
+                .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
+                .borderRadius($r('app.float.radius_card'))
                 .width('100%')
-                .padding(10)
-                .justifyContent(FlexAlign.Start)
+                .height(80) // 按钮高度保持
+                .onClick(() => {
+                  this.handleItemClick(item.key);
+                })
               }
-              .type(ButtonType.Normal)
-              // .backgroundColor($r('app.color.bg_card')) // 原来的背景色
-              // 修改为：动态半透明背景 + 毛玻璃效果
-              .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-              .backdropBlur(20) // 核心：背景模糊
-              .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }) // 增加淡淡的边框，提升质感
-              .borderRadius($r('app.float.radius_card'))
-              .width('100%')
-              .height(80)
-              // 绑定点击事件，处理跳转
-              .onClick(() => {
-                this.handleItemClick(item.key);
-              })
-            }
-          }, (item: btn) => item.key)
-        }
-        .columnsTemplate('1fr 1fr')
-        .rowsGap(35)
-        .columnsGap(12)
-        .layoutWeight(1.2)
-        .height('100%')
-        .margin({
-          top: $r('app.float.margin_normal'),
+            }, (item: btn) => item.key)
+          }
+          .columnsTemplate('1fr 1fr')
+          .rowsGap(12) // 稍微调小一点行间距，给下方腾出空间
+          .columnsGap(12)
+          .width('100%')
+          .height('60')
+          .margin({
+            top: $r('app.float.margin_small')
+          })
+          .layoutWeight(3.5) // 2. 关键：Grid 占据垂直方向 3/4 的空间
 
-        })
+          // === 下半部分：天气组件 (新增) ===
+          Row() {
+            // 左边：图标和温度
+            Column() {
+              Row() {
+                // 请确保 media 下有 weather_icon，如果没有找个现有的代替
+                Image($r('app.media.ic_sun'))
+                  .width(40)
+                  .height(40)
+                  .objectFit(ImageFit.Contain)
+                  .fillColor(Color.Orange) // 太阳设为橙色
+                  .margin({ right: 10 })
+
+                Column() {
+                  Text("26°C")
+                    .fontSize(28)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor($r('app.color.text_white'))
+
+                  Text("多云转晴")
+                    .fontSize($r('app.float.font_size_small'))
+                    .fontColor($r('app.color.text_white'))
+                    .opacity(0.8)
+                }
+                .alignItems(HorizontalAlign.Start)
+              }
+            }
+            .layoutWeight(1)
+            .justifyContent(FlexAlign.Center)
+            .alignItems(HorizontalAlign.Start)
+            .padding({ left: 20 })
+
+            // 右边：天气提醒
+            Column() {
+              Text("温馨提示")
+                .fontSize($r('app.float.font_size_small'))
+                .fontWeight(FontWeight.Bold)
+                .fontColor($r('app.color.text_white'))
+                .margin({ bottom: 5 })
+
+              Text("今日紫外线较强，出门请注意防晒。")
+                .fontSize(12) // 字体稍微小一点以便放下更多字
+                .fontColor($r('app.color.text_white'))
+                .opacity(0.8)
+                .maxLines(2)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+            }
+            .layoutWeight(1) // 右边文字区域稍微宽一点
+            .alignItems(HorizontalAlign.Start)
+            .justifyContent(FlexAlign.Center)
+            .padding({ right: 15 })
+
+          }
+          .width('100%')
+          .margin({
+            bottom: ('12fp')
+          })
+          .layoutWeight(1) // 3. 关键：天气卡片占据垂直方向 1/4 的空间
+          // 4. 样式复用：保持和其他卡片一致的玻璃质感
+          .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+          .backdropBlur(20)
+          .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
+          .borderRadius($r('app.float.radius_card'))
+
+        }
+        .layoutWeight(1.2) // 整个左侧区域的宽度权重保持不变
+        .height('100%')
+
 
         // --- B. 中间 + 右侧：卡片区域 ---
         Row({ space: 15 }) {
@@ -343,7 +412,7 @@ export struct MainPage{
             .layoutWeight(1)
 
             // 可视对讲
-            Column({space:10}) {
+            Column({space:3}) {
               Text($r('app.string.card_intercom_title'))
                 .fontSize($r('app.float.font_size_normal'))
                 .fontWeight(FontWeight.Bold)
@@ -366,7 +435,7 @@ export struct MainPage{
                 .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)') // 内部按钮也稍微透明一点
                 .borderRadius($r('app.float.radius_card'))
                 .margin($r('app.float.margin_tiny'))
-
+                .padding(5)
                 Button() {
                   Row({space:10})
                   {
@@ -383,6 +452,7 @@ export struct MainPage{
                 .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)') // 内部按钮也稍微透明一点
                 .borderRadius($r('app.float.radius_card'))
                 .margin($r('app.float.margin_tiny'))
+                .padding(5)
               }
               .justifyContent(FlexAlign.Center)
             }
