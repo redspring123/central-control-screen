@@ -2,18 +2,29 @@ import { NavigationModel } from '../model/NavigationModel';
 import router from '@ohos.router';
 import  {MenuItem} from '../model/btn'// 定义菜单接口
 import { common, ConfigurationConstant } from '@kit.AbilityKit';
-
+import { HealthData } from '../model/SportsDataModel';
+import { HealthSportsViewModel } from '../viewmodel/HealthSportsViewModel';
 
 @Entry({ routeName: 'HealthWellnessPage' })
 @Component
 export struct WellnessPage {
   private context = getContext(this) as common.UIAbilityContext;
   @State isDarkMode: boolean = false;
+  @State healthData: HealthData = new HealthData();
+  private viewModel: HealthSportsViewModel = new HealthSportsViewModel();
 
   aboutToAppear() {
     // 同步系统当前的深浅模式状态
     let colorMode = this.context.config.colorMode;
     this.isDarkMode = (colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
+  }
+
+  async loadHealthData() {
+    try {
+      this.healthData = await this.viewModel.getHealthData();
+    } catch (error) {
+      console.error(`加载健康数据失败: ${JSON.stringify(error)}`);
+    }
   }
 
   // 菜单配置：映射你上传的图片 (注意：文件名必须对应你media目录下的实际文件名，且必须小写)
@@ -135,15 +146,15 @@ export struct WellnessPage {
                 //.blur(30)
 
               // 气泡1：体温 (左上)
-              this.HealthBubble("36.4°C", "体温", -110, -100)
+              this.HealthBubble(`${this.healthData.temperature.value}°C`, "体温", -110, -100)
               // 气泡2：心率 (右上)
-              this.HealthBubble("78次", "心率/min", 90, -110)
+              this.HealthBubble(`${this.healthData.heart.heartRate}次`, "心率/min", 90, -110)
               // 气泡3：血糖 (左中)
-              this.HealthBubble("5.6", "血糖", -130, 20)
+              this.HealthBubble(`${this.healthData.bloodOxygen.spo2}%`, "血氧", -130, 20)
               // 气泡4：血氧 (右中)
-              this.HealthBubble("98%", "血氧", 110, 40)
+              this.HealthBubble(`${this.healthData.bloodPressure.systolic}/${this.healthData.bloodPressure.diastolic}`, "血压", 110, 40)
               // 气泡5：血压 (底部)
-              this.HealthBubble("115/80", "血压", -20, 130)
+              this.HealthBubble(`${this.healthData.stress.value}`, "压力", -20, 130)
             }
             .layoutWeight(1.5)
             .height('100%')
