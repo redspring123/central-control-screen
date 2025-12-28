@@ -29,7 +29,7 @@ interface UISportsData {
 
 @Entry({ routeName: 'HealthSportsPage' })
 @Component
-export struct SportsPage {
+export struct HealthSportsPage {
   // 3. 【前端状态】
   // 这是页面的"唯一真实数据源"，默认给一些空数据占位
   @State ui: UISportsData = {
