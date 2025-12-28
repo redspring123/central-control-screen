@@ -1,6 +1,7 @@
 // src/main/ets/model/NavigationModel.ts (确认这部分代码)
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
+import call from '@ohos.telephony.call';
 
 export class NavigationModel {
   static goBack() {
@@ -13,7 +14,39 @@ export class NavigationModel {
 
     switch (key) {
       case 'btn_one_key_call':
-        promptAction.showToast({ message: '正在呼叫管理中心...', duration: 2000 });
+        try {
+          promptAction.showDialog({
+            title: '一键呼叫',
+            message: '是否立即呼叫家庭医生？',
+            buttons: [
+              { text: '取消', color: '#8E8E93' },
+              { text: '立即呼叫', color: '#FF3B30' }
+            ]
+          }, (err, data) => {
+            if (err) {
+              console.error('showDialog err: ' + err);
+              return;
+            }
+            if (data.index === 1) {
+              promptAction.showToast({ message: '正在呼叫家庭医生...', duration: 2000 });
+              // 尝试使用系统拨号
+              call.makeCall('13800000000', (err) => {
+                if (err) {
+                  console.error('makeCall fail, err: ' + JSON.stringify(err));
+                  // 如果系统拨号失败（如无sim卡），则跳转到模拟页面
+                  try {
+                    router.pushNamedRoute({ name: 'CallPage' });
+                  } catch (e) {
+                    console.error('pushNamedRoute CallPage failed', e);
+                    promptAction.showToast({ message: '跳转失败，请检查路由配置' });
+                  }
+                }
+              });
+            }
+          });
+        } catch (error) {
+          console.error('showDialog error: ' + error);
+        }
         break;
       case 'card_consult':
         // 跳转到在线问诊页面

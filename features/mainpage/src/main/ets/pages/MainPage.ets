@@ -1,12 +1,64 @@
 import { btn } from '../model/btn' // 保持你的引用
 import { RouterHelper } from '../model/RouterHelper' //
-import 'medical';
+import router from '@ohos.router';
+import { PromptAction } from '@kit.ArkUI';
+import call from '@ohos.telephony.call';
+import { HomeDataService, EnergyData, NetworkData } from '../model/HomeDataService';
+// 引入命名路由页面，确保路由注册生效
+import 'medical/src/main/ets/pages/CallPage';
+import 'health/src/main/ets/page/WellnessPage';
+
+import { common, ConfigurationConstant } from '@kit.AbilityKit';
 
 @Entry
 @Component
 export struct MainPage{
   @State showHome: boolean = true;
   @State showScene: boolean = false;
+  @State energyData: EnergyData = { power: 0, todayUsage: 0, carbon: 0 };
+  @State networkData: NetworkData = { uploadSpeed: '0 Mbps', downloadSpeed: '0 Mbps', quality: '良' };
+  private timerId: number = -1;
+
+  private context = getContext(this) as common.UIAbilityContext;
+  @State isDarkMode: boolean = false;
+
+  aboutToAppear() {
+    // 初始加载
+    this.refreshData();
+    
+    // 同步系统当前的深浅模式状态
+    let colorMode = this.context.config.colorMode;
+    this.isDarkMode = (colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
+
+    // 定时刷新，模拟实时数据变化
+    this.timerId = setInterval(() => {
+      this.refreshData();
+    }, 3000);
+  }
+
+  aboutToDisappear() {
+    if (this.timerId !== -1) {
+      clearInterval(this.timerId);
+    }
+  }
+
+  refreshData() {
+    this.energyData = HomeDataService.getEnergyData();
+    this.networkData = HomeDataService.getNetworkData();
+  }
+  //切换主题
+  toggleTheme() {
+    this.isDarkMode = !this.isDarkMode;
+    let applicationContext = this.context.getApplicationContext();
+
+    if (this.isDarkMode) {
+      // 切换到深色模式 (这也将通知其他模块切换到 dark 资源)
+      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
+    } else {
+      // 切换到浅色模式
+      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT);
+    }
+  }
 
   // 保持你的数据结构不变
   private sceneList: btn[] = [
@@ -20,14 +72,17 @@ export struct MainPage{
     { key: 'btn_sport_health', icon: 'foreground' }   // 需跳转
   ];
 
+  // 处理点击事件
+  private handleItemClick(key: string) {
+    RouterHelper.jump(key);
+  }
+
   build() {
     Column() {
       // 1. 顶部导航栏 (保持原样，微调间距)
       Row() {
-        Text("08:08") // 假设这是时间占位
-          .fontSize($r('app.float.font_size_large'))
-          .fontWeight(FontWeight.Bold)
-          .fontColor($r('app.color.text_white'))
+        // 左侧时间已移除，使用系统状态栏时间
+        Blank()
 
         Row({ space: 15 }) {
           Image($r('app.media.home_icon'))
@@ -38,65 +93,160 @@ export struct MainPage{
             .width(24).height(24)
             .opacity(this.showScene ? 1 : 0.5)
             .fillColor(Color.White)//黑色图标反转颜色
+          Button() {
+
+            Image(this.isDarkMode ? $r('app.media.ic_sun') : $r('app.media.ic_moon'))
+              .width(24)
+              .height(24)
+              .colorFilter([
+                0, 0, 0, 0, 255,
+                0, 0, 0, 0, 255,
+                0, 0, 0, 0, 255,
+                0, 0, 0, 1, 0
+              ]) // 强制变白
+          }
+          .type(ButtonType.Normal) // 去掉默认圆角背景
+          .backgroundColor(Color.Transparent) // 透明背景
+          .onClick(() => {
+            this.toggleTheme(); // 绑定点击事件
+          })
         }.margin({ left: 20 })
       }
+      .backgroundColor($r('app.color.top'))
       .width('100%')
       .padding({ left: 20, right: 20, top: 15, bottom: 15 })
 
       // 2. 内容区域
       Row({ space: 15 }) {
 
-        // --- A. 左侧：8个场景按钮 (优化版) ---
-        Grid() {
-          ForEach(this.sceneList, (item: btn) => {
-            GridItem() {
-              Button() {
-                Row() {
-                  // 1. 图标容器 (Icon Box) - 解决图标看不清的问题
-                  Column() {
-                    Image($r(`app.media.${item.icon}`))
-                      .width($r('app.float.icon_inside_size'))
-                      .height($r('app.float.icon_inside_size'))
-                      .objectFit(ImageFit.Contain)
-                    // 如果你的PNG是黑色的，可以尝试反转颜色，或者保持原样，因为背景现在是半透明白，黑色也能看清
-                    //.fillColor(Color.White) // 如果是SVG解开此行
-                  }
-                  .width($r('app.float.icon_box_size'))
-                  .height($r('app.float.icon_box_size'))
-                  .backgroundColor($r('app.color.bg_icon_container')) // 半透明背景
-                  .borderRadius(10)
-                  .justifyContent(FlexAlign.Center)
-                  .alignItems(HorizontalAlign.Center)
-                  .margin({ right: 12 })
 
-                  // 2. 文字
-                  Text($r(`app.string.${item.key}`))
-                    .fontSize($r('app.float.font_size_normal'))
-                    .fontColor($r('app.color.text_white'))
-                    .fontWeight(FontWeight.Medium)
-                    .layoutWeight(1)
+        // --- A. 左侧区域：Grid + 天气组件 ---
+        Column({ space: 5 }) {
+
+          // === 上半部分：8个场景按钮 ===
+          Grid() {
+            ForEach(this.sceneList, (item: btn) => {
+              GridItem() {
+                Button() {
+                  Row() {
+                    // 图标容器
+                    Column() {
+                      Image($r(`app.media.${item.icon}`))
+                        .width($r('app.float.icon_inside_size'))
+                        .height($r('app.float.icon_inside_size'))
+                        .objectFit(ImageFit.Contain)
+                    }
+                    .width($r('app.float.icon_box_size'))
+                    .height($r('app.float.icon_box_size'))
+                    .backgroundColor($r('app.color.bg_icon_container'))
+                    .borderRadius(10)
+                    .justifyContent(FlexAlign.Center)
+                    .alignItems(HorizontalAlign.Center)
+                    .margin({ right: 12 })
+
+                    // 文字
+                    Text($r(`app.string.${item.key}`))
+                      .fontSize($r('app.float.font_size_normal'))
+                      .fontColor($r('app.color.text_white'))
+                      .fontWeight(FontWeight.Medium)
+                      .layoutWeight(1)
+                  }
+                  .width('100%')
+                  .padding(10)
+                  .justifyContent(FlexAlign.Start)
                 }
+                .type(ButtonType.Normal)
+                // 样式保持统一
+                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+                .backdropBlur(20)
+                .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
+                .borderRadius($r('app.float.radius_card'))
                 .width('100%')
-                .padding(10)
-                .justifyContent(FlexAlign.Start)
+                .height(80) // 按钮高度保持
+                .onClick(() => {
+                  this.handleItemClick(item.key);
+                })
               }
-              .type(ButtonType.Normal)
-              .backgroundColor($r('app.color.bg_card'))
-              .borderRadius($r('app.float.radius_card'))
-              .width('100%')
-              .height(80)
-              // 绑定点击事件，处理跳转
-              .onClick(() => {
-                RouterHelper.jump(item.key);
-              })
+            }, (item: btn) => item.key)
+          }
+          .columnsTemplate('1fr 1fr')
+          .rowsGap(15) // 稍微调小一点行间距，给下方腾出空间
+          .columnsGap(12)
+          .width('100%')
+          .height('60')
+          .margin({
+            top: $r('app.float.margin_small')
+          })
+          .layoutWeight(3.5) // 2. 关键：Grid 占据垂直方向 3/4 的空间
+
+          // === 下半部分：天气组件 (新增) ===
+          Row() {
+            // 左边：图标和温度
+            Column() {
+              Row() {
+                // 请确保 media 下有 weather_icon，如果没有找个现有的代替
+                Image($r('app.media.ic_sun'))
+                  .width(40)
+                  .height(40)
+                  .objectFit(ImageFit.Contain)
+                  .fillColor(Color.Orange) // 太阳设为橙色
+                  .margin({ right: 10 })
+
+                Column() {
+                  Text("26°C")
+                    .fontSize(28)
+                    .fontWeight(FontWeight.Bold)
+                    .fontColor($r('app.color.text_white'))
+
+                  Text("多云转晴")
+                    .fontSize($r('app.float.font_size_small'))
+                    .fontColor($r('app.color.text_white'))
+                    .opacity(0.8)
+                }
+                .alignItems(HorizontalAlign.Start)
+              }
             }
-          }, (item: btn) => item.key)
+            .layoutWeight(1)
+            .justifyContent(FlexAlign.Center)
+            .alignItems(HorizontalAlign.Start)
+            .padding({ left: 20 })
+
+            // 右边：天气提醒
+            Column() {
+              Text("温馨提示")
+                .fontSize($r('app.float.font_size_small'))
+                .fontWeight(FontWeight.Bold)
+                .fontColor($r('app.color.text_white'))
+                .margin({ bottom: 5 })
+
+              Text("今日紫外线较强，出门请注意防晒。")
+                .fontSize(12) // 字体稍微小一点以便放下更多字
+                .fontColor($r('app.color.text_white'))
+                .opacity(0.8)
+                .maxLines(2)
+                .textOverflow({ overflow: TextOverflow.Ellipsis })
+            }
+            .layoutWeight(1) // 右边文字区域稍微宽一点
+            .alignItems(HorizontalAlign.Start)
+            .justifyContent(FlexAlign.Center)
+            .padding({ right: 15 })
+
+          }
+          .width('100%')
+          .margin({
+            bottom: ('12fp')
+          })
+          .layoutWeight(1) // 3. 关键：天气卡片占据垂直方向 1/4 的空间
+          // 4. 样式复用：保持和其他卡片一致的玻璃质感
+          .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+          .backdropBlur(20)
+          .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
+          .borderRadius($r('app.float.radius_card'))
+
         }
-        .columnsTemplate('1fr 1fr')
-        .rowsGap(12)
-        .columnsGap(12)
-        .layoutWeight(1.2)
+        .layoutWeight(1.2) // 整个左侧区域的宽度权重保持不变
         .height('100%')
+
 
         // --- B. 中间 + 右侧：卡片区域 ---
         Row({ space: 15 }) {
@@ -109,19 +259,23 @@ export struct MainPage{
                 .fontSize($r('app.float.font_size_normal'))
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_white'))
-              Text($r('app.string.card_energy_power'))
+              Text(`${this.energyData.todayUsage} kWh`)
                 .fontSize($r('app.float.font_size_xlarge'))
                 .fontWeight(FontWeight.Bold)
                 .fontColor($r('app.color.text_white'))
               Text($r('app.string.card_energy_today'))
                 .fontSize($r('app.float.font_size_small'))
                 .fontColor($r('app.color.text_gray'))
-              Text($r('app.string.card_energy_carbon'))
+              Text(`本月碳排放量: ${this.energyData.carbon} kg`)
                 .fontSize($r('app.float.font_size_small'))
                 .fontColor($r('app.color.text_gray'))
                 .margin({ top: $r('app.float.margin_tiny') })
             }
-            .backgroundColor($r('app.color.bg_card'))
+            // .backgroundColor($r('app.color.bg_card')) // 原来的背景色
+            // 修改为：动态半透明背景 + 毛玻璃效果
+            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+            .backdropBlur(20)
+            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
             .borderRadius($r('app.float.radius_card'))
             .margin($r('app.float.margin_small'))
             .padding($r('app.float.margin_normal'))
@@ -164,7 +318,10 @@ export struct MainPage{
               }
               .justifyContent(FlexAlign.Center)
             }
-            .backgroundColor($r('app.color.bg_card'))
+            // 修改为：动态半透明背景 + 毛玻璃效果
+            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+            .backdropBlur(20)
+            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
             .borderRadius($r('app.float.radius_card'))
             .margin($r('app.float.margin_small'))
             .padding($r('app.float.margin_normal'))
@@ -179,7 +336,8 @@ export struct MainPage{
               $r('app.media.video_call'), // 背景大图标
               '60fp',
               true, // 可点击
-              'card_consult' // Key
+              'card_consult', // Key
+              Color.Green // 传入绿色
             )
           }
           .layoutWeight(1.5)
@@ -212,14 +370,14 @@ export struct MainPage{
                       .fontSize($r('app.float.font_size_normal'))
                       .fontWeight(FontWeight.Bold)
                       .fontColor($r('app.color.text_white'))
-                    Text($r('app.string.card_network_quality'))
+                    Text(this.networkData.quality)
                       .fontSize($r('app.float.font_size_large'))
                       .fontWeight(FontWeight.Bold)
                       .fontColor($r('app.color.text_white'))
-                    Text($r('app.string.card_network_speed_up'))
+                    Text(`↑ ${this.networkData.uploadSpeed}`)
                       .fontSize($r('app.float.font_size_small'))
                       .fontColor($r('app.color.text_gray'))
-                    Text($r('app.string.card_network_speed_down'))
+                    Text(`↓ ${this.networkData.downloadSpeed}`)
                       .fontSize($r('app.float.font_size_small'))
                       .fontColor($r('app.color.text_gray'))
                       .margin({ top: $r('app.float.margin_tiny') })
@@ -231,6 +389,7 @@ export struct MainPage{
                   Image($r('app.media.network_speed'))
                     .width($r('app.float.icon_large'))
                     .height($r('app.float.icon_large'))
+                    .fillColor('#ff379ee0') // 浅蓝色
                 }
                 .width('90%')
                 .justifyContent(FlexAlign.SpaceBetween)
@@ -240,9 +399,12 @@ export struct MainPage{
               }
               .width('100%')
               .height('100%')
-              .backgroundColor($r('app.color.bg_card'))
+              .backgroundColor(Color.Transparent) // 按钮背景透明，由外层 Column 控制
             }
-            .backgroundColor($r('app.color.bg_card'))
+            // 修改为：动态半透明背景 + 毛玻璃效果
+            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+            .backdropBlur(20)
+            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
             .borderRadius($r('app.float.radius_card'))
             .margin($r('app.float.margin_small'))
             .padding($r('app.float.margin_normal'))
@@ -250,7 +412,7 @@ export struct MainPage{
             .layoutWeight(1)
 
             // 可视对讲
-            Column({space:10}) {
+            Column({space:3}) {
               Text($r('app.string.card_intercom_title'))
                 .fontSize($r('app.float.font_size_normal'))
                 .fontWeight(FontWeight.Bold)
@@ -270,10 +432,10 @@ export struct MainPage{
 
                   }
                 }
-                .backgroundColor($r('app.color.bg_card'))
+                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)') // 内部按钮也稍微透明一点
                 .borderRadius($r('app.float.radius_card'))
                 .margin($r('app.float.margin_tiny'))
-
+                .padding(5)
                 Button() {
                   Row({space:10})
                   {
@@ -287,13 +449,17 @@ export struct MainPage{
                   }
 
                 }
-                .backgroundColor($r('app.color.bg_card'))
+                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)') // 内部按钮也稍微透明一点
                 .borderRadius($r('app.float.radius_card'))
                 .margin($r('app.float.margin_tiny'))
+                .padding(5)
               }
               .justifyContent(FlexAlign.Center)
             }
-            .backgroundColor($r('app.color.bg_card'))
+            // 修改为：动态半透明背景 + 毛玻璃效果
+            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+            .backdropBlur(20)
+            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
             .borderRadius($r('app.float.radius_card'))
             .margin($r('app.float.margin_small'))
             .padding($r('app.float.margin_normal'))
@@ -321,7 +487,7 @@ export struct MainPage{
 
   // --- 辅助构建函数：通用卡片 ---
   // 这种写法可以极大减少重复代码，并且统一风格
-  @Builder InfoCardBuilder(title: Resource, subText: Resource | string, valueText: string, bgIcon: Resource | null, bgIconSize:string |null, isClickable: boolean, jumpKey?: string) {
+  @Builder InfoCardBuilder(title: Resource, subText: Resource | string, valueText: string, bgIcon: Resource | null, bgIconSize:string |null, isClickable: boolean, jumpKey?: string, iconColor?: ResourceColor) {
     // 1. 外层容器改为 Row，实现左右布局
     Row() {
 
@@ -358,6 +524,7 @@ export struct MainPage{
             .width(bgIconSize) // 设置合适的尺寸
             .height(bgIconSize)
             .objectFit(ImageFit.Contain)
+            .fillColor(iconColor) // 如果传入了颜色，则应用
           // .fillColor(Color.White) // 如果是SVG且需要变白，请解开此注释
         }
         .layoutWeight(1) // 关键：占据右侧空间，与左侧平分或按比例分配
@@ -372,7 +539,10 @@ export struct MainPage{
     // 卡片通用样式
     .width('100%')
     .layoutWeight(1) // 垂直方向均分
-    .backgroundColor($r('app.color.bg_card'))
+    // 修改为：动态半透明背景 + 毛玻璃效果
+    .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+    .backdropBlur(20)
+    .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
     .borderRadius($r('app.float.radius_card'))
     .margin($r('app.float.margin_small'))
     .padding($r('app.float.margin_normal')) // 卡片整体内边距

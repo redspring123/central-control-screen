@@ -1,11 +1,20 @@
 import { NavigationModel } from '../model/NavigationModel';
 import router from '@ohos.router';
 import  {MenuItem} from '../model/btn'// 定义菜单接口
+import { common, ConfigurationConstant } from '@kit.AbilityKit';
 
 
 @Entry({ routeName: 'HealthWellnessPage' })
 @Component
 export struct WellnessPage {
+  private context = getContext(this) as common.UIAbilityContext;
+  @State isDarkMode: boolean = false;
+
+  aboutToAppear() {
+    // 同步系统当前的深浅模式状态
+    let colorMode = this.context.config.colorMode;
+    this.isDarkMode = (colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
+  }
 
   // 菜单配置：映射你上传的图片 (注意：文件名必须对应你media目录下的实际文件名，且必须小写)
   private menuList: MenuItem[] = [
@@ -108,7 +117,11 @@ export struct WellnessPage {
           }
           .width('100%')
           .padding(20)
-          .backgroundColor($r('app.color.bg_card'))
+          // .backgroundColor($r('app.color.bg_card'))
+          // 修改为：动态半透明背景 + 毛玻璃效果
+          .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+          .backdropBlur(20)
+          .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
           .borderRadius($r('app.float.card_radius'))
 
           // 2.2 核心展示区 (悬浮气泡 + 右侧状态与呼叫)
@@ -117,9 +130,9 @@ export struct WellnessPage {
             // A. 左侧：5个悬浮气泡 (替代3D模型)
             Stack() {
               // 背景光效 (可选)
-              Circle({ width: 200, height: 200 })
-                .fill('rgba(0, 209, 255, 0.05)')
-                .blur(30)
+              //Circle({ width: 200, height: 200 })
+                //.fill('rgba(0, 209, 255, 0.05)')
+                //.blur(30)
 
               // 气泡1：体温 (左上)
               this.HealthBubble("36.4°C", "体温", -110, -100)
@@ -134,7 +147,6 @@ export struct WellnessPage {
             }
             .layoutWeight(1.5)
             .height('100%')
-            .backgroundColor('rgba(0,0,0,0.2)') // 深色底
             .borderRadius($r('app.float.card_radius'))
             .clip(true)
 
@@ -169,7 +181,11 @@ export struct WellnessPage {
               .layoutWeight(1)
               .width('100%')
               .padding(15)
-              .backgroundColor($r('app.color.bg_card'))
+              // .backgroundColor($r('app.color.bg_card'))
+              // 修改为：动态半透明背景 + 毛玻璃效果
+              .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+              .backdropBlur(20)
+              .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
               .borderRadius($r('app.float.card_radius'))
 
               // 下部分：一键呼叫 (大按钮)
@@ -220,7 +236,11 @@ export struct WellnessPage {
                 }
                 .width('100%').height('100%')
                 .justifyContent(FlexAlign.Center)
-                .backgroundColor($r('app.color.bg_card')) // 确保你的 color.json 里的 bg_card 是半透明的
+                // .backgroundColor($r('app.color.bg_card')) // 确保你的 color.json 里的 bg_card 是半透明的
+                // 修改为：动态半透明背景 + 毛玻璃效果
+                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+                .backdropBlur(20)
+                .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
                 .borderRadius($r('app.float.card_radius'))
                 .onClick(() => {
                   NavigationModel.handleJump(item.key);

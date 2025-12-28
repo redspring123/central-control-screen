@@ -1,6 +1,6 @@
 import router from '@ohos.router';
 import promptAction from '@ohos.promptAction';
-
+import call from '@ohos.telephony.call';
 
 import 'health';
 import 'medical';
@@ -65,7 +65,42 @@ export class RouterHelper {
         return;
 
       case 'btn_one_key_call': // 一键呼叫
-        promptAction.showToast({ message: '正在呼叫管理中心...' });
+        try {
+          promptAction.showDialog({
+            title: '一键呼叫',
+            message: '是否立即呼叫家庭医生？',
+            buttons: [
+              { text: '取消', color: '#8E8E93' },
+              { text: '立即呼叫', color: '#FF3B30' }
+            ]
+          }, (err, data) => {
+            if (err) {
+              console.error('showDialog err: ' + err);
+              return;
+            }
+            if (data.index === 1) {
+              promptAction.showToast({ message: '正在呼叫家庭医生...', duration: 2000 });
+              // 尝试使用系统拨号
+              call.makeCall('13800000000', (err) => {
+                if (err) {
+                  console.error('makeCall fail, err: ' + JSON.stringify(err));
+                  // 如果系统拨号失败（如无sim卡），则跳转到模拟页面
+                  router.pushNamedRoute({
+                    name: 'CallPage',
+                    params: params
+                  }, router.RouterMode.Single, (err) => {
+                    if (err) {
+                      console.error(`跳转失败: ${err.code}, ${err.message}`);
+                      promptAction.showToast({ message: `跳转失败: ${err.message}` });
+                    }
+                  });
+                }
+              });
+            }
+          });
+        } catch (error) {
+          console.error('showDialog error: ' + error);
+        }
         return;
 
       default:
