@@ -1,5 +1,6 @@
 import { btn } from '../model/btn' // 保持你的引用
 import { RouterHelper } from '../model/RouterHelper' //
+import 'medical';
 
 @Entry
 @Component
