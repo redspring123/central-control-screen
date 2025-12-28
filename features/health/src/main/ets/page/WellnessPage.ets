@@ -17,6 +17,7 @@ export struct WellnessPage {
     // 同步系统当前的深浅模式状态
     let colorMode = this.context.config.colorMode;
     this.isDarkMode = (colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
+    this.loadHealthData();
   }
 
   async loadHealthData() {
