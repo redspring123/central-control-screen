@@ -47,7 +47,7 @@ export class RouterHelper {
         return;
 
       case 'btn_sport_health': // 运动健康
-        // 导航到 health 模块下的运动页（已在 SportsPage 中声明 routeName）
+        // 导航到 health 模块下的运动页（已在 HealthSportsPage 中声明 routeName）
         try {
           router.pushNamedRoute({
             name: 'HealthSportsPage',
