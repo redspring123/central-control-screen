@@ -2,7 +2,7 @@
   "color": [
     { "name": "bg_page", "value": "#FF5254F6" },
     { "name": "bg_card", "value": "#16021A26" },
-    { "name": "text_white", "value": "#FFFFFF" },
+    { "name": "text_white", "value": "#FFFFFFFF" },
     { "name": "text_gray", "value": "#AAAAAA" },
     { "name": "text_red", "value": "#FF4444" },
     { "name": "text_green", "value": "#4CAF50" },
