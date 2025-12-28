@@ -170,7 +170,7 @@ export struct MainPage{
             }, (item: btn) => item.key)
           }
           .columnsTemplate('1fr 1fr')
-          .rowsGap(12) // 稍微调小一点行间距，给下方腾出空间
+          .rowsGap(15) // 稍微调小一点行间距，给下方腾出空间
           .columnsGap(12)
           .width('100%')
           .height('60')

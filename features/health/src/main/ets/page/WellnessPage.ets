@@ -129,6 +129,10 @@ export struct WellnessPage {
 
             // A. 左侧：5个悬浮气泡 (替代3D模型)
             Stack() {
+              // 背景光效 (可选)
+              //Circle({ width: 200, height: 200 })
+                //.fill('rgba(0, 209, 255, 0.05)')
+                //.blur(30)
 
               // 气泡1：体温 (左上)
               this.HealthBubble("36.4°C", "体温", -110, -100)

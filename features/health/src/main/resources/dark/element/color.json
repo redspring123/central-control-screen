@@ -4,7 +4,7 @@
     { "name": "bg_card", "value": "#1AFFFFFF" },
     { "name": "bg_icon_container", "value": "#0DFFFFFF" },
 
-    { "name": "text_white", "value": "#FFFFFF" },
+    { "name": "text_white", "value": "#FFFFFFFF" },
     { "name": "text_gray", "value": "#99FFFFFF" },
     { "name": "text_cyan", "value": "#00D1FF" },
     { "name": "text_safe", "value": "#52C41A" },
