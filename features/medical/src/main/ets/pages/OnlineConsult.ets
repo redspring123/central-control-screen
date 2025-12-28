@@ -27,6 +27,22 @@ export struct OnlineConsultPage {
     { id: 2, name: '李子傲', title: '主任医生', hospital: '广东省第二人民医院', department: '神经内科', specialty: '高血压、失眠、焦虑症、头痛', fee: 50 },
     { id: 3, name: '王康', title: '副主任医师', hospital: '中山一院', department: '骨科', specialty: '颈椎病、腰椎间盘突出、脊柱侧弯', fee: 60 },
     { id: 4, name: '陈美', title: '主治医师', hospital: '市一医院', department: '皮肤科', specialty: '皮炎、湿疹、痤疮、过敏', fee: 30 },
+    {
+      id: 5, name: '赵敏', title: '副主任医师', hospital: '广州市妇女儿童医疗中心', department: '妇科',
+      specialty: '月经不调、妇科炎症、宫颈疾病、备孕指导', fee: 45
+    },
+    {
+      id: 6, name: '钱伟', title: '主治医师', hospital: '广州市妇女儿童医疗中心', department: '儿科',
+      specialty: '小儿感冒、发烧、咳嗽、消化不良、生长发育', fee: 35
+    },
+    {
+      id: 7, name: '孙强', title: '主任医师', hospital: '中山大学中山眼科中心', department: '眼科',
+      specialty: '近视矫正、白内障、青光眼、眼底病变', fee: 80
+    },
+    {
+      id: 8, name: '周杰', title: '主治医师', hospital: '广东省口腔医院', department: '口腔科',
+      specialty: '牙齿矫正、种植牙、智齿拔除、牙周治疗', fee: 40
+    }
   ];
 
   // 当前显示在界面上的列表（筛选后的结果）
