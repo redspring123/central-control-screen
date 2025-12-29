@@ -10,6 +10,14 @@ export interface NetworkData {
   quality: string;       // 网络质量
 }
 
+export interface WeatherData {
+  tempC: number;
+  condition: string;
+  tip: string;
+  icon: string;
+  city: string;
+}
+
 export class HomeDataService {
   /**
    * 获取家庭能耗数据 (模拟)
@@ -34,5 +42,16 @@ export class HomeDataService {
       uploadSpeed: `${up} Mbps`,
       quality: down > 300 ? '优' : '良'
     };
+  }
+
+  static getWeatherData(): WeatherData {
+    const samples: WeatherData[] = [
+      { tempC: 26, condition: '多云转晴', tip: '今日紫外线较强，出门请注意防晒。', icon: 'sun', city: '深圳' },
+      { tempC: 18, condition: '小雨', tip: '出门记得带伞，注意防滑。', icon: 'rain', city: '深圳' },
+      { tempC: 32, condition: '晴', tip: '天气炎热，补水降温。', icon: 'sun', city: '深圳' },
+      { tempC: 5, condition: '阴', tip: '气温较低，注意保暖。', icon: 'cloud', city: '深圳' }
+    ];
+    const idx = Math.floor(Math.random() * samples.length);
+    return samples[idx];
   }
 }

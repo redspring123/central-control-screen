@@ -3,7 +3,7 @@ import { RouterHelper } from '../model/RouterHelper' //
 import router from '@ohos.router';
 import { PromptAction } from '@kit.ArkUI';
 import call from '@ohos.telephony.call';
-import { HomeDataService, EnergyData, NetworkData } from '../model/HomeDataService';
+import { HomeDataService, EnergyData, NetworkData, WeatherData } from '../model/HomeDataService';
 // 引入命名路由页面，确保路由注册生效
 import 'medical/src/main/ets/pages/CallPage';
 import 'health/src/main/ets/page/WellnessPage';
@@ -17,6 +17,9 @@ export struct MainPage{
   @State showScene: boolean = false;
   @State energyData: EnergyData = { power: 0, todayUsage: 0, carbon: 0 };
   @State networkData: NetworkData = { uploadSpeed: '0 Mbps', downloadSpeed: '0 Mbps', quality: '良' };
+  @State weatherTempText: string = '26°C';
+  @State weatherConditionText: string = '多云转晴';
+  @State weatherTipText: string = '今日紫外线较强，出门请注意防晒。';
   private timerId: number = -1;
 
   private context = getContext(this) as common.UIAbilityContext;
@@ -45,6 +48,11 @@ export struct MainPage{
   refreshData() {
     this.energyData = HomeDataService.getEnergyData();
     this.networkData = HomeDataService.getNetworkData();
+    const w: WeatherData = HomeDataService.getWeatherData();
+    const t = Math.round(w.tempC);
+    this.weatherTempText = `${isNaN(t) ? 0 : t}°C`;
+    this.weatherConditionText = w.condition;
+    this.weatherTipText = w.tip;
   }
   //切换主题
   toggleTheme() {
@@ -193,12 +201,12 @@ export struct MainPage{
                   .margin({ right: 10 })
 
                 Column() {
-                  Text("26°C")
+                  Text(this.weatherTempText)
                     .fontSize(28)
                     .fontWeight(FontWeight.Bold)
                     .fontColor($r('app.color.text_white'))
 
-                  Text("多云转晴")
+                  Text(this.weatherConditionText)
                     .fontSize($r('app.float.font_size_small'))
                     .fontColor($r('app.color.text_white'))
                     .opacity(0.8)
@@ -219,7 +227,7 @@ export struct MainPage{
                 .fontColor($r('app.color.text_white'))
                 .margin({ bottom: 5 })
 
-              Text("今日紫外线较强，出门请注意防晒。")
+              Text(this.weatherTipText)
                 .fontSize(12) // 字体稍微小一点以便放下更多字
                 .fontColor($r('app.color.text_white'))
                 .opacity(0.8)
