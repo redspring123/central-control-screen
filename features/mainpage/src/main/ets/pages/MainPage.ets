@@ -20,6 +20,7 @@ export struct MainPage{
   @State weatherTempText: string = '26°C';
   @State weatherConditionText: string = '多云转晴';
   @State weatherTipText: string = '今日紫外线较强，出门请注意防晒。';
+  @State weatherIcon: string = 'sun';
   private timerId: number = -1;
 
   private context = getContext(this) as common.UIAbilityContext;
@@ -53,6 +54,7 @@ export struct MainPage{
     this.weatherTempText = `${isNaN(t) ? 0 : t}°C`;
     this.weatherConditionText = w.condition;
     this.weatherTipText = w.tip;
+    this.weatherIcon = w.icon || 'sun';
   }
   //切换主题
   toggleTheme() {
@@ -193,11 +195,10 @@ export struct MainPage{
             Column() {
               Row() {
                 // 请确保 media 下有 weather_icon，如果没有找个现有的代替
-                Image($r('app.media.ic_sun'))
+                Image($r(`app.media.ic_${this.weatherIcon}`))
                   .width(40)
                   .height(40)
                   .objectFit(ImageFit.Contain)
-                  .fillColor(Color.Orange) // 太阳设为橙色
                   .margin({ right: 10 })
 
                 Column() {

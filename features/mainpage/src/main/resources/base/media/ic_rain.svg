@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="cloudRainGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#B9C6D3"/>
+      <stop offset="100%" stop-color="#8FA1B2"/>
+    </linearGradient>
+    <linearGradient id="dropGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4DA3FF"/>
+      <stop offset="100%" stop-color="#1E67D2"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00000033"/>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)">
+    <path fill="url(#cloudRainGrad)" d="M48 28c0-7.18-5.82-13-13-13-5.73 0-10.62 3.84-12.25 9.16C19.58 24.53 16 28.63 16 33.5 16 40.4 21.6 46 28.5 46h21c6.35 0 11.5-5.15 11.5-11.5S55.35 23 49 23c-.34 0-.67.02-1 .05C47.85 25.04 48 26.49 48 28z"/>
+    <path fill="url(#cloudRainGrad)" d="M23 34c0-4.97 4.03-9 9-9 3.63 0 6.78 2.12 8.23 5.2.57-.13 1.17-.2 1.77-.2 4.42 0 8 3.58 8 8s-3.58 8-8 8H30c-3.86 0-7-3.14-7-7z" opacity="0.9"/>
+    <path d="M22 50c0 0 3-5 3-7s-2-3-3-1-1 5 0 8z" fill="url(#dropGrad)"/>
+    <path d="M34 51c0 0 3-5 3-7s-2-3-3-1-1 5 0 8z" fill="url(#dropGrad)"/>
+    <path d="M46 50c0 0 3-5 3-7s-2-3-3-1-1 5 0 8z" fill="url(#dropGrad)"/>
+  </g>
+</svg>
