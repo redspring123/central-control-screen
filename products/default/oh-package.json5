@@ -9,6 +9,7 @@
     "mainpage": "file:../../features/mainpage",
     "health": "file:../../features/health",
     "medical":"file:../../features/medical",
-    "utils": "file:../../commons/utils"
+    "utils": "file:../../commons/utils",
+    "auth": "file:../../features/auth"
   }
 }

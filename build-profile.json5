@@ -57,6 +57,18 @@
     {
       "name": "mainpage",
       "srcPath": "./features/mainpage"
+    },
+    {
+      "name": "auth",
+      "srcPath": "./features/auth",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
     }
   ]
 }

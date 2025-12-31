@@ -1,18 +1,39 @@
-import { btn } from '../model/btn' // 保持你的引用
-import { RouterHelper } from '../model/RouterHelper' //
+import { RouterHelper } from '../model/RouterHelper'
+import { btn } from '../model/btn'
 import router from '@ohos.router';
-import { PromptAction } from '@kit.ArkUI';
-import call from '@ohos.telephony.call';
 import { HomeDataService, EnergyData, NetworkData, WeatherData } from '../model/HomeDataService';
 // 引入命名路由页面，确保路由注册生效
 import 'medical/src/main/ets/pages/CallPage';
 import 'health/src/main/ets/page/WellnessPage';
+import 'health/src/main/ets/page/HealthAssistantPage';
+import 'auth/src/main/ets/pages/ProfilePage';
 
 import { common, ConfigurationConstant } from '@kit.AbilityKit';
 
+// 1. 定义卡片库的元数据（用于在添加列表中显示）
+interface CardMeta {
+  key: string;
+  name: string;
+}
+
+// 2. 卡片库（这里定义了所有可能被添加的卡片）
+const CARD_LIBRARY: CardMeta[] = [
+  { key: 'energy', name: '家庭能耗' },
+  { key: 'security', name: '家庭安防' },
+  { key: 'network', name: '家庭网络' },
+  { key: 'health', name: '居家康养' },
+  { key: 'consult', name: '在线问诊' },
+  { key: 'intercom', name: '可视对讲' },
+  { key: 'music', name: '背景音乐' }, // 新增示例
+  { key: 'robot', name: '扫地机器人' }, // 新增示例
+  { key: 'curtain', name: '智能窗帘' }, // 新增示例
+  { key: 'light', name: '全屋灯光' }   // 新增示例
+];
+
 @Entry
 @Component
-export struct MainPage{
+export struct MainPage {
+  // === 状态变量 ===
   @State showHome: boolean = true;
   @State showScene: boolean = false;
   @State energyData: EnergyData = { power: 0, todayUsage: 0, carbon: 0 };
@@ -21,29 +42,54 @@ export struct MainPage{
   @State weatherConditionText: string = '多云转晴';
   @State weatherTipText: string = '今日紫外线较强，出门请注意防晒。';
   @State weatherIcon: string = 'sun';
-  private timerId: number = -1;
-
-  private context = getContext(this) as common.UIAbilityContext;
   @State isDarkMode: boolean = false;
+  @State currentBreakpoint: string = 'md';
+  private timerId: number = -1;
+  private context = getContext(this) as common.UIAbilityContext;
+
+  // === 核心逻辑：当前展示的卡片 Key 列表 ===
+  // 数组的顺序决定了 Grid 中的显示顺序。默认放4个。
+  @State displayedCards: string[] = ['energy', 'security', 'health', 'network'];
+
+  // === 弹窗控制器：用于添加卡片 ===
+  dialogController: CustomDialogController = new CustomDialogController({
+    builder: AddCardDialog({
+      // 传入当前已存在的卡片，用于过滤（不显示已经添加的）
+      currentKeys: this.displayedCards,
+      // 传入添加回调
+      onAdd: (key: string) => {
+        // 核心逻辑：往数组里 push 一个 key，界面自动刷新
+        if (this.displayedCards.length < 6) {
+          this.displayedCards.push(key);
+        }
+      }
+    }),
+    autoCancel: true,
+    alignment: DialogAlignment.Center,
+    customStyle: true // 使用自定义样式，去掉默认白色背景
+  });
+
+  // 左侧固定按钮列表
+  private sceneList: btn[] = [
+    { key: 'btn_warm_home', icon: 'login' },
+    { key: 'btn_safe_leave', icon: 'logout' },
+    { key: 'btn_full_temp', icon: 'full_temp' },
+    { key: 'btn_dehumidify', icon: 'dehumidify' },
+    { key: 'btn_ventilation', icon: 'ventilation' },
+    { key: 'btn_more_scenes', icon: 'foreground' },
+    { key: 'btn_one_key_call', icon: 'ventilation' },
+    { key: 'btn_sport_health', icon: 'foreground' }
+  ];
 
   aboutToAppear() {
-    // 初始加载
     this.refreshData();
-    
-    // 同步系统当前的深浅模式状态
     let colorMode = this.context.config.colorMode;
     this.isDarkMode = (colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
-
-    // 定时刷新，模拟实时数据变化
-    this.timerId = setInterval(() => {
-      this.refreshData();
-    }, 3000);
+    this.timerId = setInterval(() => { this.refreshData(); }, 3000);
   }
 
   aboutToDisappear() {
-    if (this.timerId !== -1) {
-      clearInterval(this.timerId);
-    }
+    if (this.timerId !== -1) clearInterval(this.timerId);
   }
 
   refreshData() {
@@ -56,509 +102,360 @@ export struct MainPage{
     this.weatherTipText = w.tip;
     this.weatherIcon = w.icon || 'sun';
   }
-  //切换主题
+
   toggleTheme() {
     this.isDarkMode = !this.isDarkMode;
     let applicationContext = this.context.getApplicationContext();
+    applicationContext.setColorMode(this.isDarkMode ? ConfigurationConstant.ColorMode.COLOR_MODE_DARK : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT);
+  }
 
-    if (this.isDarkMode) {
-      // 切换到深色模式 (这也将通知其他模块切换到 dark 资源)
-      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
+  // =====================================================================================
+  // 核心 Builder 分发器：根据 Key 决定渲染哪个卡片
+  // 这就是你的“卡片库”的实体化过程
+  // =====================================================================================
+  @Builder RenderCardByKey(key: string) {
+    if (key === 'energy') {
+      this.EnergyCard()
+    } else if (key === 'security') {
+      this.SecurityCard()
+    } else if (key === 'network') {
+      this.NetworkCard()
+    } else if (key === 'intercom') {
+      this.IntercomCard()
+    } else if (key === 'consult') {
+      // 使用百分比 '35%' 代替固定尺寸，适配不同屏幕
+      this.InfoCardBuilder($r('app.string.card_consult_title'), $r('app.string.card_consult_time'), '服务中', $r('app.media.video_call'), '35%', true, 'card_consult', Color.Green)
+    } else if (key === 'health') {
+      // 使用百分比 '50%' 代替固定尺寸 '100fp'
+      this.InfoCardBuilder($r('app.string.card_health_title'), $r('app.string.card_health_sleep'), '睡眠优', $r('app.media.sleep_quality'), '50%', true, 'card_health')
     } else {
-      // 切换到浅色模式
-      applicationContext.setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT);
+      // 默认/其他未实现的卡片占位
+      this.PlaceholderCard(key)
     }
   }
 
-  // 保持你的数据结构不变
-  private sceneList: btn[] = [
-    { key: 'btn_warm_home', icon: 'login' },//将原来的temp_home改为进门login图标
-    { key: 'btn_safe_leave', icon: 'logout' },//将原来的temp_home改为出门logout图标
-    { key: 'btn_full_temp', icon: 'full_temp' },
-    { key: 'btn_dehumidify', icon: 'dehumidify' },
-    { key: 'btn_ventilation', icon: 'ventilation' },
-    { key: 'btn_more_scenes', icon: 'foreground' },
-    { key: 'btn_one_key_call', icon: 'ventilation' }, // 需跳转
-    { key: 'btn_sport_health', icon: 'foreground' }   // 需跳转
-  ];
+  // =====================================================================================
+  // 具体卡片实现 (你的积木)
+  // =====================================================================================
 
-  // 处理点击事件
-  private handleItemClick(key: string) {
-    RouterHelper.jump(key);
+  // 1. 能耗卡片
+  @Builder EnergyCard() {
+    Column({ space: 5 }) {
+      Text($r('app.string.card_energy_title')).fontSize($r('app.float.font_size_large')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_white'))
+      Text(`${this.energyData.todayUsage} kWh`).fontSize($r('app.float.font_size_xlarge')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_white'))
+      Text($r('app.string.card_energy_today')).fontSize($r('app.float.font_size_small')).fontColor($r('app.color.text_gray'))
+      Text(`本月碳排: ${this.energyData.carbon} kg`).fontSize($r('app.float.font_size_small')).fontColor($r('app.color.text_gray'))
+    }
+    .width('100%').height('100%')
+    .alignItems(HorizontalAlign.Center).justifyContent(FlexAlign.Center) // 改为居中
   }
 
+  // 2. 安防卡片
+  @Builder SecurityCard() {
+    Column({ space: 5 }) {
+      Text($r('app.string.card_security_title')).fontSize($r('app.float.font_size_large')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_white'))
+      Text($r('app.string.card_security_status')).fontSize($r('app.float.font_size_xlarge')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_red'))
+      Row({ space: 20 }) { // 增加间距
+        Image($r('app.media.alarm_active')).width(32).height(32).fillColor('#4CAF50') // 增大图标
+        Image($r('app.media.alarm_exit')).width(32).height(32).fillColor('#F44336') // 增大图标
+      }.margin({ top: 10 })
+    }
+    .width('100%').height('100%')
+    .alignItems(HorizontalAlign.Center).justifyContent(FlexAlign.Center) // 改为居中
+  }
+
+  // 3. 网络卡片
+  @Builder NetworkCard() {
+    Row() {
+      Column() {
+        Text($r('app.string.card_network_title')).fontSize($r('app.float.font_size_large')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_white'))
+        Text(this.networkData.quality).fontSize($r('app.float.font_size_large')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_white'))
+        Text(`↑ ${this.networkData.uploadSpeed}`).fontSize(12).fontColor($r('app.color.text_gray'))
+        Text(`↓ ${this.networkData.downloadSpeed}`).fontSize(12).fontColor($r('app.color.text_gray'))
+      }.alignItems(HorizontalAlign.Start) // 网络卡片保持左对齐可能更好看，或者也改居中？这里先保持左对齐，配合右侧大图标
+      Blank()
+      Image($r('app.media.network_speed')).width(48).height(48).fillColor('#ff379ee0') // 增大图标
+    }
+    .width('100%').height('100%')
+    .alignItems(VerticalAlign.Center)
+    .padding({ left: 10, right: 10 }) // 增加内边距防止贴边
+  }
+
+  // 4. 可视对讲
+  @Builder IntercomCard() {
+    Column({space: 10}) {
+      Text($r('app.string.card_intercom_title')).fontSize($r('app.float.font_size_large')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_white'))
+      Row({space: 20}) {
+        Column() { Image($r('app.media.door_intercom')).width(32).height(32); Text("对讲").fontSize(12).fontColor(Color.White).margin({top:5}) }
+        Column() { Image($r('app.media.camera_monitor')).width(32).height(32); Text("监控").fontSize(12).fontColor(Color.White).margin({top:5}) }
+      }
+    }
+    .width('100%').height('100%')
+    .alignItems(HorizontalAlign.Center).justifyContent(FlexAlign.Center) // 改为居中
+  }
+
+  // 5. 通用卡片
+  @Builder InfoCardBuilder(title: Resource, subText: Resource | string, valueText: string, bgIcon: Resource | null, bgIconSize: string | number | null, isClickable: boolean, jumpKey?: string, iconColor?: ResourceColor) {
+    Row() {
+      Column() {
+        Text(title).fontSize($r('app.float.font_size_large')).fontColor($r('app.color.text_white')).fontWeight(FontWeight.Bold)
+        Text(valueText).fontSize($r('app.float.font_size_large')).fontColor($r('app.color.text_white')).fontWeight(FontWeight.Bold).margin({ top: 5, bottom: 2 })
+        if (subText) Text(subText).fontSize($r('app.float.font_size_small')).fontColor($r('app.color.text_gray'))
+      }.layoutWeight(1).height('100%').alignItems(HorizontalAlign.Start).justifyContent(FlexAlign.Center)
+      if (bgIcon) {
+        // 优先使用传入的尺寸，否则默认 48
+        Image(bgIcon)
+          .width(bgIconSize ? bgIconSize : 48)
+          .height(bgIconSize ? bgIconSize : 48)
+          .objectFit(ImageFit.Contain)
+          .fillColor(iconColor)
+      }
+    }.width('100%').height('100%')
+    .padding({ left: 10, right: 5 }) // 增加内边距
+    .onClick(() => { if (isClickable && jumpKey) RouterHelper.jump(jumpKey); })
+  }
+
+  // 6. 占位卡片（用于未实现的）
+  @Builder PlaceholderCard(name: string) {
+    Column() {
+      Text(name).fontSize(16).fontWeight(FontWeight.Bold).fontColor(Color.White)
+      Text("暂未开发").fontSize(12).fontColor(Color.Gray)
+    }.width('100%').height('100%').justifyContent(FlexAlign.Center)
+  }
+
+
+  // =====================================================================================
+  // UI 布局
+  // =====================================================================================
   build() {
     Column() {
-      // 1. 顶部导航栏 (保持原样，微调间距)
+      // 1. 顶部栏 (简化)
       Row() {
-        // 左侧时间已移除，使用系统状态栏时间
-        Blank()
-
-        Row({ space: 15 }) {
-          Image($r('app.media.home_icon'))
-            .width(24).height(24)
-            .opacity(this.showHome ? 1 : 0.5)
-            .fillColor(Color.White)//黑色图标反转颜色
-          Image($r('app.media.sofa_icon'))
-            .width(24).height(24)
-            .opacity(this.showScene ? 1 : 0.5)
-            .fillColor(Color.White)//黑色图标反转颜色
-          Button() {
-
-            Image(this.isDarkMode ? $r('app.media.ic_sun') : $r('app.media.ic_moon'))
-              .width(24)
-              .height(24)
-              .colorFilter([
-                0, 0, 0, 0, 255,
-                0, 0, 0, 0, 255,
-                0, 0, 0, 0, 255,
-                0, 0, 0, 1, 0
-              ]) // 强制变白
-          }
-          .type(ButtonType.Normal) // 去掉默认圆角背景
-          .backgroundColor(Color.Transparent) // 透明背景
+        // 个人信息入口
+        Image($r('app.media.user_icon'))
+          .width(24).height(24)
+          .margin({ right: 10 })
           .onClick(() => {
-            this.toggleTheme(); // 绑定点击事件
+            router.pushNamedRoute({ name: 'ProfilePage' });
           })
+
+        Blank()
+        Row({ space: 15 }) {
+          Image($r('app.media.home_icon')).width(24).height(24).fillColor(Color.White).opacity(this.showHome ? 1 : 0.5)
+          Image($r('app.media.sofa_icon')).width(24).height(24).fillColor(Color.White).opacity(this.showScene ? 1 : 0.5)
+          Button() { Image(this.isDarkMode ? $r('app.media.ic_sun') : $r('app.media.ic_moon')).width(24).height(24).fillColor(Color.White) }
+          .type(ButtonType.Normal).backgroundColor(Color.Transparent)
+          .onClick(() => this.toggleTheme())
         }.margin({ left: 20 })
-      }
-      .backgroundColor($r('app.color.top'))
-      .width('100%')
-      .padding({ left: 20, right: 20, top: 15, bottom: 15 })
+      }.backgroundColor($r('app.color.top')).width('100%').padding(15)
 
-      // 2. 内容区域
-      Row({ space: 15 }) {
+      // 2. 主体内容：使用 GridRow 实现响应式布局 (手机竖排，平板横排)
+      GridRow({
+        columns: 12,
+        gutter: { x: 15, y: 15 }, // 水平和垂直间距
+        breakpoints: { value: ["600vp", "840vp"], reference: BreakpointsReference.WindowSize }
+      }) {
 
-
-        // --- A. 左侧区域：Grid + 天气组件 ---
-        Column({ space: 5 }) {
-
-          // === 上半部分：8个场景按钮 ===
-          Grid() {
-            ForEach(this.sceneList, (item: btn) => {
-              GridItem() {
-                Button() {
-                  Row() {
-                    // 图标容器
-                    Column() {
-                      Image($r(`app.media.${item.icon}`))
-                        .width($r('app.float.icon_inside_size'))
-                        .height($r('app.float.icon_inside_size'))
-                        .objectFit(ImageFit.Contain)
-                    }
-                    .width($r('app.float.icon_box_size'))
-                    .height($r('app.float.icon_box_size'))
-                    .backgroundColor($r('app.color.bg_icon_container'))
-                    .borderRadius(10)
-                    .justifyContent(FlexAlign.Center)
-                    .alignItems(HorizontalAlign.Center)
-                    .margin({ right: 12 })
-
-                    // 文字
-                    Text($r(`app.string.${item.key}`))
-                      .fontSize($r('app.float.font_size_normal'))
-                      .fontColor($r('app.color.text_white'))
-                      .fontWeight(FontWeight.Medium)
-                      .layoutWeight(1)
+        // --- A. 左侧：场景按钮 + 天气 ---
+        // sm(手机): 占满12列 (换行显示)
+        // md(平板): 占4列 (左侧显示)
+        GridCol({ span: { sm: 12, md: 4, lg: 3 } }) {
+          Column({ space: 10 }) { // 增加间距
+            // Grid 场景按钮
+            Grid() {
+              ForEach(this.sceneList, (item: btn) => {
+                GridItem() {
+                  Button() {
+                    Row() {
+                      Column() { Image($r(`app.media.${item.icon}`)).width(20).height(20) }
+                      .width(36).height(36).backgroundColor($r('app.color.bg_icon_container')).borderRadius(10).justifyContent(FlexAlign.Center).margin({ right: 10 })
+                      Text($r(`app.string.${item.key}`)).fontSize(14).fontColor(Color.White).layoutWeight(1)
+                    }.width('100%').padding(8)
                   }
-                  .width('100%')
-                  .padding(10)
-                  .justifyContent(FlexAlign.Start)
+                  .type(ButtonType.Normal)
+                  .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+                  .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius(12)
+                  .width('100%').height(60)
+                  .onClick(() => RouterHelper.jump(item.key))
                 }
-                .type(ButtonType.Normal)
-                // 样式保持统一
+              }, (item: btn) => item.key)
+            }
+            .columnsTemplate('1fr 1fr')
+            .rowsGap(10).columnsGap(10)
+            .height(this.showHome ? 280 : 0) // 简单适配：手机上可能需要限制高度，或者让它自适应
+
+            // 天气卡片
+            Row() {
+              Image($r(`app.media.ic_${this.weatherIcon}`)).width(40).height(40).margin({ right: 10, left: 10 })
+              Column() {
+                Text(this.weatherTempText).fontSize(24).fontWeight(FontWeight.Bold).fontColor(Color.White)
+                Text(this.weatherConditionText).fontSize(12).fontColor(Color.White).opacity(0.8)
+              }.alignItems(HorizontalAlign.Start)
+              Blank()
+              Text(this.weatherTipText).fontSize(12).fontColor(Color.White).opacity(0.8).maxLines(2).textOverflow({overflow:TextOverflow.Ellipsis}).width('40%').margin({right:10})
+            }
+            .width('100%').height(80) // 固定高度
+            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+            .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius(12)
+
+            // AI 健康助手入口
+            Row() {
+              SymbolGlyph($r('sys.symbol.heart_fill'))//系统内置图标
+                .fontSize(32)
+                .width(40)
+                .height(40)
+                .margin({ right: 10, left: 10 })
+                .fontColor([Color.Red])
+              Column() {
+                Text("健康助手").fontSize(18).fontWeight(FontWeight.Bold).fontColor(Color.White)
+                Text("AI 智能分析").fontSize(12).fontColor(Color.White).opacity(0.8)
+              }.alignItems(HorizontalAlign.Start)
+              Blank()
+            }
+            .width('100%').height(80)
+            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+            .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius(12)
+            .onClick(() => {
+              router.pushNamedRoute({ name: 'HealthAssistantPage' });
+            })
+          }
+        }
+
+        // --- B. 右侧：可增删的卡片 Grid ---
+        // sm(手机): 占满12列
+        // md(平板): 占8列
+        GridCol({ span: { sm: 12, md: 8, lg: 9 } }) {
+          Grid() {
+            // 1. 渲染已添加的卡片
+            ForEach(this.displayedCards, (key: string, index: number) => {
+              GridItem() {
+                Stack({ alignContent: Alignment.TopEnd }) {
+                  // (1) 卡片内容主体
+                  Column() {
+                    this.RenderCardByKey(key)
+                  }
+                  .width('100%').height('100%')
+                  .padding(15)
+
+                  // (2) 删除按钮
+                  Button() {
+                    Image($r('app.media.ic_public_cancel'))
+                      .width(16).height(16)
+                      .fillColor('rgba(255,255,255,0.6)')
+                  }
+                  .type(ButtonType.Circle)
+                  .backgroundColor('rgba(0,0,0,0.2)')
+                  .width(24).height(24)
+                  .margin({ top: 5, right: 5 })
+                  .onClick(() => {
+                    this.displayedCards.splice(index, 1);
+                  })
+                }
                 .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
                 .backdropBlur(20)
                 .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
-                .borderRadius($r('app.float.radius_card'))
+                .borderRadius(16)
                 .width('100%')
-                .height(80) // 按钮高度保持
+                .height('100%')
+              }
+            }, (key: string) => key)
+
+            // 2. 渲染“添加”按钮
+            if (this.displayedCards.length < 6) {
+              GridItem() {
+                Button() {
+                  Column() {
+                    Text("+").fontSize(40).fontColor('rgba(255,255,255,0.5)').fontWeight(FontWeight.Lighter)
+                    Text("添加卡片").fontSize(12).fontColor('rgba(255,255,255,0.5)')
+                  }
+                }
+                .type(ButtonType.Normal)
+                .backgroundColor('rgba(255, 255, 255, 0.05)')
+                .border({ width: 1, color: 'rgba(255, 255, 255, 0.1)', style: BorderStyle.Dashed })
+                .borderRadius(16)
+                .width('100%')
+                .height('100%')
                 .onClick(() => {
-                  this.handleItemClick(item.key);
+                  this.dialogController.open()
                 })
               }
-            }, (item: btn) => item.key)
+            }
+
           }
           .columnsTemplate('1fr 1fr')
-          .rowsGap(15) // 稍微调小一点行间距，给下方腾出空间
-          .columnsGap(12)
-          .width('100%')
-          .height('60')
-          .margin({
-            top: $r('app.float.margin_small')
-          })
-          .layoutWeight(3.5) // 2. 关键：Grid 占据垂直方向 3/4 的空间
-
-          // === 下半部分：天气组件 (新增) ===
-          Row() {
-            // 左边：图标和温度
-            Column() {
-              Row() {
-                // 请确保 media 下有 weather_icon，如果没有找个现有的代替
-                Image($r(`app.media.ic_${this.weatherIcon}`))
-                  .width(40)
-                  .height(40)
-                  .objectFit(ImageFit.Contain)
-                  .margin({ right: 10 })
-
-                Column() {
-                  Text(this.weatherTempText)
-                    .fontSize(28)
-                    .fontWeight(FontWeight.Bold)
-                    .fontColor($r('app.color.text_white'))
-
-                  Text(this.weatherConditionText)
-                    .fontSize($r('app.float.font_size_small'))
-                    .fontColor($r('app.color.text_white'))
-                    .opacity(0.8)
-                }
-                .alignItems(HorizontalAlign.Start)
-              }
-            }
-            .layoutWeight(1)
-            .justifyContent(FlexAlign.Center)
-            .alignItems(HorizontalAlign.Start)
-            .padding({ left: 20 })
-
-            // 右边：天气提醒
-            Column() {
-              Text("温馨提示")
-                .fontSize($r('app.float.font_size_small'))
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.text_white'))
-                .margin({ bottom: 5 })
-
-              Text(this.weatherTipText)
-                .fontSize(12) // 字体稍微小一点以便放下更多字
-                .fontColor($r('app.color.text_white'))
-                .opacity(0.8)
-                .maxLines(2)
-                .textOverflow({ overflow: TextOverflow.Ellipsis })
-            }
-            .layoutWeight(1) // 右边文字区域稍微宽一点
-            .alignItems(HorizontalAlign.Start)
-            .justifyContent(FlexAlign.Center)
-            .padding({ right: 15 })
-
-          }
-          .width('100%')
-          .margin({
-            bottom: ('12fp')
-          })
-          .layoutWeight(1) // 3. 关键：天气卡片占据垂直方向 1/4 的空间
-          // 4. 样式复用：保持和其他卡片一致的玻璃质感
-          .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-          .backdropBlur(20)
-          .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
-          .borderRadius($r('app.float.radius_card'))
-
+          .rowsTemplate('1fr 1fr 1fr') // 恢复固定三行，保证卡片大小一致
+          .rowsGap(15)
+          .columnsGap(15)
+          .height(this.currentBreakpoint === 'sm' ? '400vp' : '100%') // 手机上固定高度，平板上撑满
         }
-        .layoutWeight(1.2) // 整个左侧区域的宽度权重保持不变
-        .height('100%')
 
-
-        // --- B. 中间 + 右侧：卡片区域 ---
-        Row({ space: 15 }) {
-
-          // === B1. 中间列 ===
-          Column({ space: 15 }) {
-            // 家庭能耗
-            Column() {
-              Text($r('app.string.card_energy_title'))
-                .fontSize($r('app.float.font_size_normal'))
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.text_white'))
-              Text(`${this.energyData.todayUsage} kWh`)
-                .fontSize($r('app.float.font_size_xlarge'))
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.text_white'))
-              Text($r('app.string.card_energy_today'))
-                .fontSize($r('app.float.font_size_small'))
-                .fontColor($r('app.color.text_gray'))
-              Text(`本月碳排放量: ${this.energyData.carbon} kg`)
-                .fontSize($r('app.float.font_size_small'))
-                .fontColor($r('app.color.text_gray'))
-                .margin({ top: $r('app.float.margin_tiny') })
-            }
-            // .backgroundColor($r('app.color.bg_card')) // 原来的背景色
-            // 修改为：动态半透明背景 + 毛玻璃效果
-            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-            .backdropBlur(20)
-            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
-            .borderRadius($r('app.float.radius_card'))
-            .margin($r('app.float.margin_small'))
-            .padding($r('app.float.margin_normal'))
-            .width('100%')
-            .layoutWeight(1)
-
-            // 家庭安防
-            Column() {
-              Text($r('app.string.card_security_title'))
-                .fontSize($r('app.float.font_size_normal'))
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.text_white'))
-              Text($r('app.string.card_security_status'))
-                .fontSize($r('app.float.font_size_xlarge'))
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.text_red'))
-              Text($r('app.string.card_security_desc'))
-                .fontSize($r('app.float.font_size_small'))
-                .fontColor($r('app.color.text_gray'))
-                .margin({ top: $r('app.float.margin_tiny') })
-
-              Row({ space: $r('app.float.space_row') }) {
-                Button() {
-                  Image($r('app.media.alarm_active'))
-                    .width($r('app.float.icon_small'))
-                    .height($r('app.float.icon_small'))
-                }
-                .backgroundColor($r('app.color.btn_green'))
-                .borderRadius($r('app.float.radius_card'))
-                .margin($r('app.float.margin_tiny'))
-
-                Button() {
-                  Image($r('app.media.alarm_exit'))
-                    .width($r('app.float.icon_small'))
-                    .height($r('app.float.icon_small'))
-                }
-                .backgroundColor($r('app.color.btn_red'))
-                .borderRadius($r('app.float.radius_card'))
-                .margin($r('app.float.margin_tiny'))
-              }
-              .justifyContent(FlexAlign.Center)
-            }
-            // 修改为：动态半透明背景 + 毛玻璃效果
-            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-            .backdropBlur(20)
-            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
-            .borderRadius($r('app.float.radius_card'))
-            .margin($r('app.float.margin_small'))
-            .padding($r('app.float.margin_normal'))
-            .width('100%')
-            .layoutWeight(1)
-
-            // 3. 在线问诊 (需跳转 -> card_consult)
-            this.InfoCardBuilder(
-              $r('app.string.card_consult_title'), // 标题
-              $r('app.string.card_consult_time'),  // 副标题或状态
-              '服务中',
-              $r('app.media.video_call'), // 背景大图标
-              '60fp',
-              true, // 可点击
-              'card_consult', // Key
-              Color.Green // 传入绿色
-            )
-          }
-          .layoutWeight(1.5)
-          .height('100%')
-
-          // === B2. 右侧列 ===
-          Column({ space: 15 }) {
-
-            // 4. 居家康养 (需跳转 -> card_health)
-            this.InfoCardBuilder(
-              $r('app.string.card_health_title'),
-              $r('app.string.card_health_sleep'),
-              '睡眠优',
-              $r('app.media.sleep_quality'), // 背景图
-              '100fp',
-              true,
-              'card_health'
-            )
-
-
-            // 家庭网络
-            Column() {
-              Button()
-              {
-                Row()
-                {
-                  Column()
-                  {
-                    Text($r('app.string.card_network_title'))
-                      .fontSize($r('app.float.font_size_normal'))
-                      .fontWeight(FontWeight.Bold)
-                      .fontColor($r('app.color.text_white'))
-                    Text(this.networkData.quality)
-                      .fontSize($r('app.float.font_size_large'))
-                      .fontWeight(FontWeight.Bold)
-                      .fontColor($r('app.color.text_white'))
-                    Text(`↑ ${this.networkData.uploadSpeed}`)
-                      .fontSize($r('app.float.font_size_small'))
-                      .fontColor($r('app.color.text_gray'))
-                    Text(`↓ ${this.networkData.downloadSpeed}`)
-                      .fontSize($r('app.float.font_size_small'))
-                      .fontColor($r('app.color.text_gray'))
-                      .margin({ top: $r('app.float.margin_tiny') })
-                  }
-                  .width('50%')
-                  .justifyContent(FlexAlign.SpaceBetween)
-
-
-                  Image($r('app.media.network_speed'))
-                    .width($r('app.float.icon_large'))
-                    .height($r('app.float.icon_large'))
-                    .fillColor('#ff379ee0') // 浅蓝色
-                }
-                .width('90%')
-                .justifyContent(FlexAlign.SpaceBetween)
-
-
-
-              }
-              .width('100%')
-              .height('100%')
-              .backgroundColor(Color.Transparent) // 按钮背景透明，由外层 Column 控制
-            }
-            // 修改为：动态半透明背景 + 毛玻璃效果
-            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-            .backdropBlur(20)
-            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
-            .borderRadius($r('app.float.radius_card'))
-            .margin($r('app.float.margin_small'))
-            .padding($r('app.float.margin_normal'))
-            .width('100%')
-            .layoutWeight(1)
-
-            // 可视对讲
-            Column({space:3}) {
-              Text($r('app.string.card_intercom_title'))
-                .fontSize($r('app.float.font_size_normal'))
-                .fontWeight(FontWeight.Bold)
-                .fontColor($r('app.color.text_white'))
-                .padding(20)
-
-              Row({ space: 30 }) {
-                Button() {
-                  Row({space:10})
-                  {
-                    Image($r('app.media.door_intercom'))
-                      .width($r('app.float.icon_normal'))
-                      .height($r('app.float.icon_normal'))
-                    Text("门禁对讲")
-                      .fontColor($r('app.color.text_white'))
-                      .fontSize($r('app.float.font_size_small'))
-
-                  }
-                }
-                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)') // 内部按钮也稍微透明一点
-                .borderRadius($r('app.float.radius_card'))
-                .margin($r('app.float.margin_tiny'))
-                .padding(5)
-                Button() {
-                  Row({space:10})
-                  {
-                    Image($r('app.media.camera_monitor'))
-                      .width($r('app.float.icon_normal'))
-                      .height($r('app.float.icon_normal'))
-                    Text("视频监视")
-                      .fontColor($r('app.color.text_white'))
-                      .fontSize($r('app.float.font_size_small'))
-
-                  }
-
-                }
-                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.2)') // 内部按钮也稍微透明一点
-                .borderRadius($r('app.float.radius_card'))
-                .margin($r('app.float.margin_tiny'))
-                .padding(5)
-              }
-              .justifyContent(FlexAlign.Center)
-            }
-            // 修改为：动态半透明背景 + 毛玻璃效果
-            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-            .backdropBlur(20)
-            .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
-            .borderRadius($r('app.float.radius_card'))
-            .margin($r('app.float.margin_small'))
-            .padding($r('app.float.margin_normal'))
-            .width('100%')
-            .layoutWeight(1)
-          }
-          .layoutWeight(1.5)
-          .height('100%')
-
-        }
-        .layoutWeight(3)
-        .height('100%')
       }
-      .width('100%')
-      .layoutWeight(1)
-      .padding($r('app.float.card_padding'))
+      .onBreakpointChange((breakpoint: string) => {
+        this.currentBreakpoint = breakpoint;
+      })
+      .width('100%').layoutWeight(1).padding(15)
     }
-    .width('100%')
-    .height('100%')
+    .width('100%').height('100%')
     .backgroundColor($r('app.color.bg_page'))
-    // 你的背景图
-    .backgroundImage($r('app.media.bg'))
-    .backgroundImageSize(ImageSize.Cover)
+    .backgroundImage($r('app.media.bg')).backgroundImageSize(ImageSize.Cover)
   }
+}
 
-  // --- 辅助构建函数：通用卡片 ---
-  // 这种写法可以极大减少重复代码，并且统一风格
-  @Builder InfoCardBuilder(title: Resource, subText: Resource | string, valueText: string, bgIcon: Resource | null, bgIconSize:string |null, isClickable: boolean, jumpKey?: string, iconColor?: ResourceColor) {
-    // 1. 外层容器改为 Row，实现左右布局
-    Row() {
+// =====================================================================================
+// 底部弹窗：卡片库列表 (添加卡片)
+// =====================================================================================
+@CustomDialog
+struct AddCardDialog {
+  controller: CustomDialogController
+  currentKeys: string[] = [] // 接收已存在的 key
+  onAdd: (key: string) => void = () => {}
 
-      // --- 左半部分：文字区域 ---
-      Column() {
-        Text(title)
-          .fontSize($r('app.float.font_size_normal'))
-          .fontColor($r('app.color.text_white'))
-          .fontWeight(FontWeight.Bold)
+  build() {
+    Column() {
+      Text("添加卡片到桌面")
+        .fontSize(18).fontWeight(FontWeight.Bold).fontColor(Color.Black)
+        .margin({ top: 20, bottom: 10 })
+        .width('100%').textAlign(TextAlign.Start).padding({left: 20})
 
-        // 数值和标题稍微拉开一点距离
-        Text(valueText)
-          .fontSize($r('app.float.font_size_large'))
-          .fontColor($r('app.color.text_white'))
-          .fontWeight(FontWeight.Bold)
-          .margin({ top: 8, bottom: 4 }) // 增加上下间距
-
-        if (subText) {
-          Text(subText)
-            .fontSize($r('app.float.font_size_small'))
-            .fontColor($r('app.color.text_gray'))
-        }
+      Grid() {
+        // 遍历所有可能的卡片
+        ForEach(CARD_LIBRARY, (item: CardMeta) => {
+          GridItem() {
+            Button() {
+              Column({space: 5}) {
+                // 这里可以用更丰富的图标
+                Image($r('app.media.home_icon')) // 暂时用通用图标，实际可用 item.key 映射
+                  .width(24).height(24).fillColor('#007DFF')
+                Text(item.name)
+                  .fontSize(14).fontColor(Color.Black)
+              }
+            }
+            .type(ButtonType.Normal)
+            .width('100%').height(80)
+            .backgroundColor('#F5F7FA')
+            .borderRadius(12)
+            .opacity(this.currentKeys.includes(item.key) ? 0.4 : 1) // 如果已添加，变灰
+            .enabled(!this.currentKeys.includes(item.key)) // 如果已添加，禁用
+            .onClick(() => {
+              this.onAdd(item.key)
+              this.controller.close()
+            })
+          }
+        })
       }
-      .layoutWeight(1) // 关键：占据左侧剩余空间
-      .height('100%')
-      .alignItems(HorizontalAlign.Start) // 文字左对齐
-      .justifyContent(FlexAlign.Center)  // 文字整体在垂直方向居中
-      .padding({ left: 10, right: 5 })   // 关键：给左边加 padding，别贴着边缘
+      .columnsTemplate('1fr 1fr 1fr') // 3列
+      .rowsGap(10).columnsGap(10)
+      .padding(15)
+      .height(200)
 
-      // --- 右半部分：图片区域 ---
-      if (bgIcon) {
-        Column() {
-          Image(bgIcon)
-            .width(bgIconSize) // 设置合适的尺寸
-            .height(bgIconSize)
-            .objectFit(ImageFit.Contain)
-            .fillColor(iconColor) // 如果传入了颜色，则应用
-          // .fillColor(Color.White) // 如果是SVG且需要变白，请解开此注释
-        }
-        .layoutWeight(1) // 关键：占据右侧空间，与左侧平分或按比例分配
-        .height('100%')
-        .justifyContent(FlexAlign.Center) // 垂直居中
-        .alignItems(HorizontalAlign.Center) // 水平居中
-      } else {
-        // 如果没有图片，用空白占位或者让左侧撑满
-        Blank().layoutWeight(1)
-      }
+      Button("取消")
+        .fontColor(Color.Gray)
+        .backgroundColor(Color.Transparent)
+        .onClick(() => this.controller.close())
+        .margin({ bottom: 10 })
     }
-    // 卡片通用样式
-    .width('100%')
-    .layoutWeight(1) // 垂直方向均分
-    // 修改为：动态半透明背景 + 毛玻璃效果
-    .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-    .backdropBlur(20)
-    .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
-    .borderRadius($r('app.float.radius_card'))
-    .margin($r('app.float.margin_small'))
-    .padding($r('app.float.margin_normal')) // 卡片整体内边距
-    .onClick(() => {
-      if (isClickable && jumpKey) {
-        RouterHelper.jump(jumpKey);
-      }
-    })
+    .width('90%')
+    .backgroundColor(Color.White)
+    .borderRadius(24)
   }
 }

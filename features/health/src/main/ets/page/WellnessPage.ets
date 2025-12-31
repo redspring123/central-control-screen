@@ -4,6 +4,7 @@ import  {MenuItem} from '../model/btn'// 定义菜单接口
 import { common, ConfigurationConstant } from '@kit.AbilityKit';
 import { HealthData } from '../model/SportsDataModel';
 import { HealthSportsViewModel } from '../viewmodel/HealthSportsViewModel';
+import { UserRepo, UserProfile, UserInfo } from 'auth';
 
 @Entry({ routeName: 'HealthWellnessPage' })
 @Component
@@ -12,19 +13,45 @@ export struct WellnessPage {
   @State isDarkMode: boolean = false;
   @State healthData: HealthData = new HealthData();
   private viewModel: HealthSportsViewModel = new HealthSportsViewModel();
+  
+  // 用户信息状态
+  @State userName: string = '请登录';
+  @State userPhone: string = '';
+  @State userAge: number = 0;
+  @State userGender: string = '未知';
 
   aboutToAppear() {
     // 同步系统当前的深浅模式状态
     let colorMode = this.context.config.colorMode;
     this.isDarkMode = (colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
     this.loadHealthData();
+    this.loadUserProfile();
+  }
+
+  async loadUserProfile() {
+    const currentUser = AppStorage.get<UserInfo>('currentUser');
+    if (currentUser) {
+      this.userName = currentUser.name;
+      try {
+        // 获取完整画像以显示手机号
+        const profile = await UserRepo.getUserProfile(currentUser.id);
+        if (profile) {
+          this.userName = profile.name || currentUser.name;
+          this.userPhone = profile.phone || '';
+          this.userAge = profile.age || 0;
+          this.userGender = profile.gender || '未知';
+        }
+      } catch (e) {
+        console.error('加载用户画像失败:', JSON.stringify(e as object));
+      }
+    }
   }
 
   async loadHealthData() {
     try {
       this.healthData = await this.viewModel.getHealthData();
     } catch (error) {
-      console.error(`加载健康数据失败: ${JSON.stringify(error)}`);
+      console.error(`加载健康数据失败: ${JSON.stringify(error as object)}`);
     }
   }
 
@@ -69,7 +96,7 @@ export struct WellnessPage {
             Image($r('app.media.icon_user_small')) // [需补充图片] 小人图标
               .width(16).height(16)
               .objectFit(ImageFit.Contain)
-            Text("高子航")
+            Text(this.userName)
               .fontSize(18)
               .fontColor(Color.White)
               .fontWeight(FontWeight.Bold)
@@ -80,7 +107,7 @@ export struct WellnessPage {
             Image($r('app.media.icon_phone_small')) // [需补充图片] 手机图标
               .width(16).height(16)
               .objectFit(ImageFit.Contain)
-            Text("17722827718")
+            Text(this.userPhone)
               .fontSize(16)
               .fontColor(Color.White)
           }
@@ -113,10 +140,10 @@ export struct WellnessPage {
               .margin({ right: 20 })
 
             Column({ space: 5 }) {
-              Text("高子航").fontSize(22).fontColor(Color.White).fontWeight(FontWeight.Bold)
+              Text(this.userName).fontSize(22).fontColor(Color.White).fontWeight(FontWeight.Bold)
               Row({ space: 10 }) {
-                Text("男").fontSize(14).fontColor(Color.White)
-                Text("28岁").fontSize(14).fontColor(Color.White)
+                Text(this.userGender).fontSize(14).fontColor(Color.White)
+                Text(`${this.userAge}岁`).fontSize(14).fontColor(Color.White)
               }
             }.alignItems(HorizontalAlign.Start)
 

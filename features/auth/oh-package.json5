@@ -1,13 +1,12 @@
 {
-  "name": "health",
+  "name": "auth",
   "version": "1.0.0",
   "description": "Please describe the basic information.",
-  "main": "Index.ets",
+  "main": "index.ets",
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "medical": "file:../../features/medical",
-    "auth": "file:../../features/auth",
     "utils": "file:../../commons/utils"
   }
 }
+
