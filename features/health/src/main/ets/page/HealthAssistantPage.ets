@@ -1,5 +1,6 @@
 import router from '@ohos.router';
 import { UserRepo, UserProfile, UserInfo } from 'auth';
+import { AiService } from '../utils/AiService';
 
 interface ChatMessage {
   id: number;
@@ -86,15 +87,26 @@ export struct HealthAssistantPage {
 
     this.isTyping = true;
 
-    // --- 预留 AI 接口位置 ---
-    // TODO: 这里将来替换为真实的 AI API 调用
-    // const response = await callAiApi(text, this.userProfile);
-    
-    // 模拟网络延迟
-    setTimeout(() => {
+    // --- 构造系统人设 (Context) ---
+    let systemPrompt = "你是一个专业的家庭健康助手。";
+    if (this.userProfile) {
+      systemPrompt += `当前用户的身体数据如下：
+      性别：${this.userProfile.gender}
+      年龄：${this.userProfile.age}
+      身高：${this.userProfile.height}cm
+      体重：${this.userProfile.weight}kg
+      请根据这些数据回答用户的健康问题，回答要亲切、专业且简短。`;
+    }
+
+    // --- 调用真实 API ---
+    try {
+      const aiReply = await AiService.chatWithAi(text, systemPrompt);
       this.isTyping = false;
-      this.mockAiResponse(text);
-    }, 1500);
+      this.addAiMessage(aiReply);
+    } catch (e) {
+      this.isTyping = false;
+      this.addAiMessage("抱歉，我遇到了一点小问题，请稍后再试。");
+    }
   }
 
   mockAiResponse(userText: string) {
