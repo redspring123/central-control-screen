@@ -6,6 +6,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "medical": "file:../../features/medical"
+    "medical": "file:../../features/medical",
+    "utils": "file:../../commons/utils"
   }
 }
