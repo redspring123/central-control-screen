@@ -16,6 +16,8 @@ central-control-screen/
 ├── commons/                     // [公共能力层] 存放基础公共代码，无业务属性
 │   ├── uicomponents/            // 通用UI组件库，比如自定义的滚动条
 │   └── utils/                   // 基础工具类 (如: LogUtil, DateUtil, HttpUtil)
+│       └── src/main/ets/
+│           └── database/        // [数据库层] 统一的本地数据库管理 (AppDatabase.ets)
 │
 ├── features/                    // [特性业务层] 独立的业务模块，高内聚低耦合
 │   ├── health/                  // [健康监测模块] 负责体征数据与运动管理
@@ -39,9 +41,9 @@ central-control-screen/
 │       └── index.ets            // 模块导出文件
 │
 └── products/                    // [产品集成层] 应用入口，组装各个 Feature
-    └── entry/                   // [Entry HAP] 默认产品入口
+    └── default/                 // [Default Product] 默认产品入口
         ├── src/main/ets/
-        │   ├── entryability/    // 应用生命周期入口 (EntryAbility.ts)
+        │   ├── entryability/    // 应用生命周期入口 (EntryAbility.ts - 初始化数据库)
         │   ├── entrybackupability/ // 应用备份恢复逻辑
         │   └── pages/           // (入口页面，通常直接引用 mainpage 模块的 Index)
         └── oh-package.json5     // 依赖配置 (引入 commons, features/health, features/medical, features/mainpage)
