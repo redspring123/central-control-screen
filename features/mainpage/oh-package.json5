@@ -8,6 +8,7 @@
   "dependencies": {
     "health": "file:../../features/health",
     "medical": "file:../../features/medical",
-    "auth": "file:../../features/auth"
+    "auth": "file:../../features/auth",
+    "utils": "file:../../commons/utils"
   }
 }

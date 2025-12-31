@@ -718,6 +718,45 @@ export class HealthDataService {
     }
   }
 
+  // 模拟数据更新 (新增)
+  static async simulateData(): Promise<void> {
+    try {
+      HealthDataService.ensureInitialized();
+      
+      // 1. 获取今日数据
+      const todayStr = HealthDataService.formatDate(new Date());
+      let record = await HealthDataService.getHealthDataByDate(todayStr);
+      
+      if (record) {
+        // 2. 模拟步数增加
+        const addedSteps = Math.floor(Math.random() * 500) + 100;
+        record.stepsCurrent += addedSteps;
+        record.stepsDistance += (addedSteps * 0.7 / 1000); // 粗略计算
+        record.caloriesCurrent += Math.floor(addedSteps * 0.04);
+        
+        // 3. 模拟心率/体温波动
+        record.heartRate = Math.floor(Math.random() * (100 - 60) + 60);
+        record.temperature = parseFloat((36.0 + Math.random()).toFixed(1));
+        record.updatedAt = new Date().toISOString();
+        
+        // 4. 更新数据库
+        await HealthDataService.saveHealthData(record);
+        console.info('HealthDataService: 模拟数据更新成功');
+      } else {
+        // 如果没有今日数据，创建一个新的
+        const newRecord = new HealthRecord();
+        newRecord.initialize(todayStr, HealthDataService.currentUserId);
+        newRecord.stepsCurrent = 1000;
+        newRecord.heartRate = 75;
+        newRecord.sleepTotal = 7.0; // 假设昨晚睡了7小时
+        await HealthDataService.saveHealthData(newRecord);
+        console.info('HealthDataService: 模拟数据创建成功');
+      }
+    } catch (error) {
+       console.error('HealthDataService: 模拟数据失败', JSON.stringify(error));
+    }
+  }
+
   // 新增接口 - 清空当前用户所有健康数据（用于测试）
   static async clearAllData(): Promise<void> {
     try {

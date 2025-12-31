@@ -2,6 +2,8 @@ import { RouterHelper } from '../model/RouterHelper'
 import { btn } from '../model/btn'
 import router from '@ohos.router';
 import { HomeDataService, EnergyData, NetworkData, WeatherData } from '../model/HomeDataService';
+import { AppDatabase } from 'utils';
+import { HealthDataService } from 'health';
 // 引入命名路由页面，确保路由注册生效
 import 'medical/src/main/ets/pages/CallPage';
 import 'health/src/main/ets/page/WellnessPage';
@@ -81,7 +83,12 @@ export struct MainPage {
     { key: 'btn_sport_health', icon: 'foreground' }
   ];
 
-  aboutToAppear() {
+  async aboutToAppear() {
+    // 初始化数据库
+    await AppDatabase.init(this.context);
+    // 初始化健康服务
+    await HealthDataService.init(this.context);
+    
     this.refreshData();
     let colorMode = this.context.config.colorMode;
     this.isDarkMode = (colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
@@ -92,9 +99,9 @@ export struct MainPage {
     if (this.timerId !== -1) clearInterval(this.timerId);
   }
 
-  refreshData() {
-    this.energyData = HomeDataService.getEnergyData();
-    this.networkData = HomeDataService.getNetworkData();
+  async refreshData() {
+    this.energyData = await HomeDataService.getEnergyData();
+    this.networkData = await HomeDataService.getNetworkData();
     const w: WeatherData = HomeDataService.getWeatherData();
     const t = Math.round(w.tempC);
     this.weatherTempText = `${isNaN(t) ? 0 : t}°C`;
@@ -246,6 +253,26 @@ export struct MainPage {
           Button() { Image(this.isDarkMode ? $r('app.media.ic_sun') : $r('app.media.ic_moon')).width(24).height(24).fillColor(Color.White) }
           .type(ButtonType.Normal).backgroundColor(Color.Transparent)
           .onClick(() => this.toggleTheme())
+
+          // 模拟数据按钮
+          Button("模拟数据")
+            .fontSize(12)
+            .height(28)
+            .backgroundColor('#40FFFFFF')
+            .fontColor(Color.White)
+            .borderRadius(14)
+            .onClick(async () => {
+              // 1. 模拟写入数据
+              await HomeDataService.simulateData();
+              await HealthDataService.simulateData();
+              
+              // 2. 刷新界面
+              this.refreshData();
+              
+              // 3. 提示用户
+              // promptAction.showToast({ message: '数据已更新' }); // 需要 import promptAction
+            })
+
         }.margin({ left: 20 })
       }.backgroundColor($r('app.color.top')).width('100%').padding(15)
 
