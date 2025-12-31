@@ -117,6 +117,10 @@ export struct HealthAssistantPage {
           .fontSize(24)
           .fontColor([Color.Black])
           .onClick(() => router.back())
+        Text("健康小助手")
+          .fontSize(20).fontWeight(FontWeight.Bold)
+          .fontColor(Color.Black) // 强制黑色
+          .margin({ left: 15 })
       }
       .width('100%')
       .padding(15)
@@ -140,6 +144,7 @@ export struct HealthAssistantPage {
                 // AI 消息气泡
                 Text(msg.content)
                   .fontSize(16)
+                  .fontColor(Color.Black) // 强制黑色字体，防止深色模式下变白看不见
                   .backgroundColor(Color.White)
                   .padding(12)
                   .borderRadius({ topLeft: 0, topRight: 12, bottomLeft: 12, bottomRight: 12 })
@@ -180,6 +185,8 @@ export struct HealthAssistantPage {
         TextInput({ placeholder: '请输入你的健康问题...', text: this.inputText })
           .layoutWeight(1)
           .height(40)
+          .fontColor(Color.Black) // 强制黑色字体
+          .placeholderColor(Color.Gray) // 强制占位符颜色
           .backgroundColor(Color.White)
           .borderRadius(20)
           .padding({ left: 15, right: 15 })
