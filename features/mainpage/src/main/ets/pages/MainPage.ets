@@ -7,6 +7,7 @@ import { HomeDataService, EnergyData, NetworkData, WeatherData } from '../model/
 // 引入命名路由页面，确保路由注册生效
 import 'medical/src/main/ets/pages/CallPage';
 import 'health/src/main/ets/page/WellnessPage';
+import 'auth/src/main/ets/pages/ProfilePage';
 
 import { common, ConfigurationConstant } from '@kit.AbilityKit';
 
@@ -91,7 +92,14 @@ export struct MainPage{
     Column() {
       // 1. 顶部导航栏 (保持原样，微调间距)
       Row() {
-        // 左侧时间已移除，使用系统状态栏时间
+        // 个人信息入口
+        Image($r('app.media.user_icon'))
+          .width(24).height(24)
+          .margin({ right: 10 })
+          .onClick(() => {
+            router.pushNamedRoute({ name: 'ProfilePage' });
+          })
+
         Blank()
 
         Row({ space: 15 }) {
