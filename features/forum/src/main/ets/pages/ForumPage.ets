@@ -8,6 +8,42 @@ import { common } from '@kit.AbilityKit';
 // 🔴 确认 IP 地址
 const DOMAIN = 'http://172.26.117.216:8000';
 
+// ⚡️ 图片 URL 处理工具 (强力修复版)
+function getImageUrl(url: string): string {
+  if (!url) return '';
+
+  // 1. 如果是 Base64 数据，直接返回
+  if (url.startsWith('data:')) return url;
+
+  // 2. 核心逻辑：只要 URL 中包含 "uploads/"，就强制替换前面的域名/IP
+  // 这能解决 IP 变动、localhost、10.0.2.2 等所有历史遗留问题
+  const keyword = 'uploads/';
+  const index = url.indexOf(keyword);
+  
+  if (index >= 0) {
+    // 提取从 uploads/ 开始的路径 (例如 "uploads/abc.jpg")
+    let relativePath = url.substring(index);
+    return `${DOMAIN}/${relativePath}`;
+  }
+
+  // 3. 如果不包含 uploads/ 但已经是 http 开头（外链），则保留
+  if (url.startsWith('http')) return url;
+
+  // 4. 剩下的情况认为是相对路径或纯文件名
+  let cleanPath = url;
+  // 去除开头的 /
+  while (cleanPath.startsWith('/')) {
+    cleanPath = cleanPath.substring(1);
+  }
+
+  // 如果看起来像文件名，补全 uploads/
+  if (!cleanPath.includes('/') && (cleanPath.endsWith('.jpg') || cleanPath.endsWith('.png') || cleanPath.endsWith('.jpeg'))) {
+    cleanPath = `uploads/${cleanPath}`;
+  }
+
+  return `${DOMAIN}/${cleanPath}`;
+}
+
 class PostParams {
   id: number = 0
   constructor(id: number) { this.id = id }
@@ -101,7 +137,13 @@ struct HomePage {
     const res = await ForumService.getFeed(this.searchText);
     this.isLoading = false;
     if (res.success && res.data) {
-      this.posts = res.data;
+      // ⚡️ 修复：防止 images 字段是字符串（后端未解析 JSON 的情况）
+      this.posts = res.data.map(item => {
+        if (typeof item.images === 'string') {
+          try { item.images = JSON.parse(item.images); } catch(e) { item.images = []; }
+        }
+        return item;
+      });
     }
   }
 
@@ -138,7 +180,7 @@ struct HomePage {
           ForEach(this.posts, (item: ForumPost) => {
             FlowItem() {
               Column() {
-                Image(item.images && item.images.length > 0 ? `${DOMAIN}${item.images[0]}` : '')
+                Image(item.images && item.images.length > 0 ? getImageUrl(item.images[0]) : '')
                   .width('100%').height(180).objectFit(ImageFit.Cover)
                   .borderRadius({topLeft: 8, topRight: 8}).backgroundColor('#E0E0E0')
 
@@ -192,6 +234,10 @@ struct PostDetailView {
     const res = await ForumService.getPostDetail(this.postId);
     if (res.success && res.data) {
       this.detail = res.data;
+      // ⚡️ 修复：防止 images 是字符串
+      if (typeof this.detail.post.images === 'string') {
+         try { this.detail.post.images = JSON.parse(this.detail.post.images); } catch(e) { this.detail.post.images = []; }
+      }
       this.isLiked = (this.detail.post.is_liked ?? 0) > 0;
       this.isFaved = (this.detail.post.is_faved ?? 0) > 0;
     }
@@ -270,7 +316,7 @@ struct PostDetailView {
                   this.pageStack.pushPath({ name: 'UserProfile', param: new PostParams(this.detail?.post.user_id ?? 0) })
                 })
 
-                Image(this.detail.post.images[0] ? `${DOMAIN}${this.detail.post.images[0]}` : '').width('100%').objectFit(ImageFit.Contain)
+                Image(this.detail.post.images[0] ? getImageUrl(this.detail.post.images[0]) : '').width('100%').objectFit(ImageFit.Contain)
                 Text(this.detail.post.title).fontSize(20).fontWeight(FontWeight.Bold).padding(10)
                 Text(this.detail.post.content).fontSize(16).padding({left: 10, right: 10})
                 Text(this.detail.post.tags).fontSize(14).fontColor('#007DFF').padding(10)
@@ -347,6 +393,19 @@ struct ProfileView {
     const res = await ForumService.getProfile(this.userId);
     if (res.success && res.data) {
       this.profile = res.data;
+      // ⚡️ 修复：遍历作品、点赞、收藏列表，处理 images 字段
+      const fixImages = (list: ForumPost[]) => {
+        return list.map(item => {
+          if (typeof item.images === 'string') {
+            try { item.images = JSON.parse(item.images); } catch(e) { item.images = []; }
+          }
+          return item;
+        });
+      };
+      this.profile.works = fixImages(this.profile.works);
+      this.profile.likes = fixImages(this.profile.likes);
+      this.profile.favs = fixImages(this.profile.favs);
+
       this.errorMsg = '';
     } else {
       this.errorMsg = res.message || '加载失败';
@@ -391,7 +450,7 @@ struct ProfileView {
             ForEach(this.currentTab === 0 ? this.profile.works : (this.currentTab === 1 ? this.profile.likes : this.profile.favs), (item: ForumPost) => {
               ListItem() {
                 Row() {
-                  Image(item.images[0] ? `${DOMAIN}${item.images[0]}` : '').width(60).height(60).borderRadius(4).backgroundColor('#eee')
+                  Image(item.images[0] ? getImageUrl(item.images[0]) : '').width(60).height(60).borderRadius(4).backgroundColor('#eee')
                   Column() {
                     Text(item.title).fontSize(16).maxLines(1)
                     Text(item.content).fontSize(12).fontColor('#999').maxLines(1).margin({top: 4})

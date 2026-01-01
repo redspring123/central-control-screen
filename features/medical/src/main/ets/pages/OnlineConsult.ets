@@ -205,9 +205,6 @@ export struct OnlineConsultPage {
             // 点击卡片事件
             .onClick(() => {
               console.info(`点击了医生: ${doctor.name}`);
-<<<<<<< HEAD
-              // 如果以后要跳到医生详情页，在这里写 router.pushUrl...
-=======
               try {
                 // 跳转到医生聊天页面，并传递医生信息
                 router.pushNamedRoute({
@@ -221,7 +218,6 @@ export struct OnlineConsultPage {
               } catch (e) {
                 console.error(`路由跳转异常: ${JSON.stringify(e)}`);
               }
->>>>>>> b171841ef9adb27ca4c3c98988707d931ca9e052
             })
           }
         })
