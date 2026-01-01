@@ -10,6 +10,7 @@
     "health": "file:../../features/health",
     "medical":"file:../../features/medical",
     "utils": "file:../../commons/utils",
-    "auth": "file:../../features/auth"
+    "auth": "file:../../features/auth",
+    "forum": "file:../../features/forum"
   }
 }

@@ -1,5 +1,6 @@
 import {MainPage} from 'mainpage'
 
+import 'forum'
 @Entry
 @Component
 struct Index {

@@ -1,0 +1,1 @@
+export { ForumPage } from './src/main/ets/pages/ForumPage';

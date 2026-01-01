@@ -82,6 +82,25 @@ export class NavigationModel {
           try { promptAction.showToast({ message: '跳转失败' }); } catch (err) { console.error('showToast failed', err); }
         }
         break;
+      // src/main/ets/model/NavigationModel.ts
+
+      case 'card_edu':
+        // 使用命名路由跳转到健康论坛
+        try {
+          router.pushNamedRoute({
+            name: 'HealthForumPage', // 🔴 关键：这里要填你在 ForumPage 里定义的名字
+            params: params
+          }, router.RouterMode.Single, (err) => {
+            if (err) {
+              console.error(`跳转论坛失败: code ${err.code}, msg ${err.message}`);
+              try { promptAction.showToast({ message: `跳转失败: ${err.message}` }); } catch (e) {}
+            }
+          });
+        } catch (e) {
+          console.error('跳转论坛异常:', e);
+          try { promptAction.showToast({ message: '跳转异常' }); } catch (e) {}
+        }
+        break;
       // ... 其他 case 可以只写 break，默认不做反应或弹 "开发中"
       default:
         promptAction.showToast({ message: '功能开发中' });

@@ -69,6 +69,10 @@
           ]
         }
       ]
+    },
+    {
+      "name": "forum",
+      "srcPath": "./features/forum",
     }
   ]
 }

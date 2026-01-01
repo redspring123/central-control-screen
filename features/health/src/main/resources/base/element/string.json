@@ -14,7 +14,7 @@
     { "name": "menu_record", "value": "健康档案" },
     { "name": "menu_vital", "value": "体征监测" },
     { "name": "menu_sport", "value": "运动健康" },
-    { "name": "menu_edu", "value": "健康宣教" },
+    { "name": "menu_edu", "value": "健康论坛" },
     { "name": "menu_consult", "value": "在线问诊" },
     { "name": "menu_nurse", "value": "护士到家" },
     { "name": "menu_drug", "value": "用药咨询" },
