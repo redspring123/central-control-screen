@@ -1,4 +1,6 @@
 import router from '@ohos.router';
+// [重要] 引入目标页面文件，确保 @Entry 装饰器执行，从而注册命名路由
+import './DoctorChatPage';
 
 // 1. 定义医生数据模型
 // 就像定义一张名片的格式，方便后面存放数据
@@ -203,7 +205,19 @@ export struct OnlineConsultPage {
             // 点击卡片事件
             .onClick(() => {
               console.info(`点击了医生: ${doctor.name}`);
-              // 如果以后要跳到医生详情页，在这里写 router.pushUrl...
+              try {
+                // 跳转到医生聊天页面，并传递医生信息
+                router.pushNamedRoute({
+                  name: 'DoctorChatPage',
+                  params: doctor
+                }, (err) => {
+                  if (err) {
+                    console.error(`路由跳转失败(callback): ${JSON.stringify(err)}`);
+                  }
+                });
+              } catch (e) {
+                console.error(`路由跳转异常: ${JSON.stringify(e)}`);
+              }
             })
           }
         })
