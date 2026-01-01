@@ -4,6 +4,7 @@ import  {MenuItem} from '../model/btn'// 定义菜单接口
 import { common, ConfigurationConstant } from '@kit.AbilityKit';
 import { HealthData } from '../model/SportsDataModel';
 import { HealthSportsViewModel } from '../viewmodel/HealthSportsViewModel';
+import { HealthDataService } from '../database/HealthDataService';
 import { UserRepo, UserProfile, UserInfo } from 'auth';
 
 @Entry({ routeName: 'HealthWellnessPage' })
@@ -24,8 +25,11 @@ export struct WellnessPage {
     // 同步系统当前的深浅模式状态
     let colorMode = this.context.config.colorMode;
     this.isDarkMode = (colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
-    this.loadHealthData();
     this.loadUserProfile();
+  }
+
+  onPageShow() {
+    this.loadHealthData();
   }
 
   async loadUserProfile() {
@@ -49,9 +53,26 @@ export struct WellnessPage {
 
   async loadHealthData() {
     try {
-      this.healthData = await this.viewModel.getHealthData();
+      // 1. 确保数据库已初始化 (双重保险)
+      await HealthDataService.init(this.context);
+      
+      // 2. 获取数据
+      let data = await this.viewModel.getHealthData();
+      
+      // 3. 检查数据是否全为0 (如果是，说明可能是新用户，尝试自动生成一次数据)
+      if (data.heart.heartRate === 0 && data.bloodOxygen.spo2 === 0) {
+        console.info('WellnessPage: 检测到健康数据为空，尝试自动生成初始数据...');
+        await HealthDataService.simulateData();
+        // 重新获取
+        data = await this.viewModel.getHealthData();
+      }
+      
+      this.healthData = data;
+      console.info('WellnessPage: 数据加载完成', JSON.stringify(this.healthData));
+
     } catch (error) {
       console.error(`加载健康数据失败: ${JSON.stringify(error as object)}`);
+      // 如果出错，这里可以给 healthData 赋一个默认的模拟值，或者弹窗提示
     }
   }
 
@@ -310,7 +331,8 @@ export struct WellnessPage {
   // --- 气泡构建函数 ---
   @Builder HealthBubble(value: string, label: string, x: number, y: number) {
     Column() {
-      Text(value)
+      // 增加判空显示，如果为0或空则显示 --
+      Text((value === '0' || value === '0°C' || value === '0%' || value === '0/0') ? '--' : value)
         .fontSize(20)
         .fontColor($r('app.color.text_cyan'))
         .fontWeight(FontWeight.Bold)

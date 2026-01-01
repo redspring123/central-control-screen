@@ -55,6 +55,14 @@ export struct HealthSportsPage {
   };
 
   aboutToAppear() {
+    this.loadData();
+  }
+
+  onPageShow() {
+    this.loadData();
+  }
+
+  loadData() {
     // =========================================================
     // 4. 【接口预留区 - 数据适配层】 (重点！)
     // 这里是前端和后端唯一的"握手"地方。

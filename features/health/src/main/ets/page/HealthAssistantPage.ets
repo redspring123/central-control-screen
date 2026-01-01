@@ -1,6 +1,9 @@
 import router from '@ohos.router';
 import { UserRepo, UserProfile, UserInfo } from 'auth';
 import { AiService } from '../utils/AiService';
+import { relationalStore } from '@kit.ArkData';
+import { AppDatabase } from 'utils';
+import { HealthDataService, HealthRecord } from '../database/HealthDataService';
 
 interface ChatMessage {
   id: number;
@@ -78,6 +81,62 @@ export struct HealthAssistantPage {
     }, 100);
   }
 
+  async getFullContext(): Promise<string> {
+    let context = "";
+
+    // 1. 用户画像
+    if (this.userProfile) {
+      context += `[用户画像]
+      性别：${this.userProfile.gender}
+      年龄：${this.userProfile.age}
+      身高：${this.userProfile.height}cm
+      体重：${this.userProfile.weight}kg\n`;
+    }
+
+    // 2. 今日健康数据
+    try {
+      const todayStr: string = HealthDataService.formatDate(new Date());
+      const healthRecord: HealthRecord | null = await HealthDataService.getHealthDataByDate(todayStr);
+      if (healthRecord) {
+        context += `[今日健康数据]
+        步数：${healthRecord.stepsCurrent}
+        心率：${healthRecord.heartRate} bpm
+        血压：${healthRecord.bpSystolic}/${healthRecord.bpDiastolic} mmHg
+        体温：${healthRecord.temperature}°C
+        压力值：${healthRecord.stressValue}
+        睡眠：${healthRecord.sleepTotal}小时
+        血氧：${healthRecord.spo2}%\n`;
+      }
+    } catch (e) {
+      console.warn('获取健康数据失败', JSON.stringify(e));
+    }
+
+    // 3. 家庭环境与网络 (直接查询数据库)
+    try {
+      const store: relationalStore.RdbStore = AppDatabase.getStore();
+      const predicates = new relationalStore.RdbPredicates('house_metrics');
+      predicates.orderByDesc('ts');
+      predicates.limitAs(1);
+      
+      const resultSet: relationalStore.ResultSet = await store.query(predicates);
+      if (resultSet.goToFirstRow()) {
+        const energy: number = resultSet.getDouble(resultSet.getColumnIndex('energy_kwh'));
+        const co2: number = resultSet.getDouble(resultSet.getColumnIndex('co2_ppm'));
+        const down: number = resultSet.getDouble(resultSet.getColumnIndex('net_down_mbps'));
+        
+        context += `[家庭环境]
+        今日能耗：${energy.toFixed(1)} kWh
+        CO2浓度：${co2.toFixed(0)} ppm
+        网络下载速度：${down.toFixed(0)} Mbps\n`;
+      }
+      resultSet.close();
+    } catch (e) {
+      console.warn('获取环境数据失败', JSON.stringify(e));
+    }
+
+    return context;
+  }
+
   async sendMessage() {
     if (!this.inputText.trim()) return;
 
@@ -89,13 +148,11 @@ export struct HealthAssistantPage {
 
     // --- 构造系统人设 (Context) ---
     let systemPrompt = "你是一个专业的家庭健康助手。";
-    if (this.userProfile) {
-      systemPrompt += `当前用户的身体数据如下：
-      性别：${this.userProfile.gender}
-      年龄：${this.userProfile.age}
-      身高：${this.userProfile.height}cm
-      体重：${this.userProfile.weight}kg
-      请根据这些数据回答用户的健康问题，回答要亲切、专业且简短。`;
+    
+    // 获取完整的上下文数据 (DB + UserProfile)
+    const contextData = await this.getFullContext();
+    if (contextData) {
+      systemPrompt += `\n当前用户的实时状态如下：\n${contextData}\n请根据这些数据回答用户的健康或家庭环境问题，回答要亲切、专业且简短。`;
     }
 
     // --- 调用真实 API ---

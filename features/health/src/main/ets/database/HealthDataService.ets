@@ -186,7 +186,7 @@ export class HealthDataService {
   }
 
   // 格式化日期为 YYYY-MM-DD
-  private static formatDate(date: Date): string {
+  public static formatDate(date: Date): string {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
@@ -651,28 +651,53 @@ export class HealthDataService {
     try {
       const record = new HealthRecord();
 
-      record.id = resultSet.getLong(resultSet.getColumnIndex('id'));
-      record.userId = resultSet.getLong(resultSet.getColumnIndex('user_id'));
-      record.date = resultSet.getString(resultSet.getColumnIndex('date'));
+      // 使用安全获取方法，防止列不存在导致崩溃
+      const safeGetLong = (colName: string): number => {
+        const idx = resultSet.getColumnIndex(colName);
+        if (idx !== -1 && !resultSet.isColumnNull(idx)) {
+          return resultSet.getLong(idx);
+        }
+        return 0;
+      };
+      
+      const safeGetDouble = (colName: string): number => {
+        const idx = resultSet.getColumnIndex(colName);
+        if (idx !== -1 && !resultSet.isColumnNull(idx)) {
+          return resultSet.getDouble(idx);
+        }
+        return 0.0;
+      };
 
-      record.stepsCurrent = resultSet.getLong(resultSet.getColumnIndex('steps_current'));
-      record.stepsGoal = resultSet.getLong(resultSet.getColumnIndex('steps_goal'));
-      record.stepsDistance = resultSet.getDouble(resultSet.getColumnIndex('steps_distance'));
-      record.caloriesCurrent = resultSet.getLong(resultSet.getColumnIndex('calories_current'));
-      record.caloriesGoal = resultSet.getLong(resultSet.getColumnIndex('calories_goal'));
+      const safeGetString = (colName: string): string => {
+        const idx = resultSet.getColumnIndex(colName);
+        if (idx !== -1 && !resultSet.isColumnNull(idx)) {
+          return resultSet.getString(idx);
+        }
+        return '';
+      };
 
-      record.sleepDeep = resultSet.getDouble(resultSet.getColumnIndex('sleep_deep'));
-      record.sleepLight = resultSet.getDouble(resultSet.getColumnIndex('sleep_light'));
-      record.sleepTotal = resultSet.getDouble(resultSet.getColumnIndex('sleep_total'));
-      record.stressValue = resultSet.getLong(resultSet.getColumnIndex('stress_value'));
-      record.heartRate = resultSet.getLong(resultSet.getColumnIndex('heart_rate'));
-      record.bpSystolic = resultSet.getLong(resultSet.getColumnIndex('bp_systolic'));
-      record.bpDiastolic = resultSet.getLong(resultSet.getColumnIndex('bp_diastolic'));
-      record.spo2 = resultSet.getLong(resultSet.getColumnIndex('spo2'));
-      record.temperature = resultSet.getDouble(resultSet.getColumnIndex('temperature'));
+      record.id = safeGetLong('id');
+      record.userId = safeGetLong('user_id');
+      record.date = safeGetString('date');
 
-      record.createdAt = resultSet.getString(resultSet.getColumnIndex('created_at'));
-      record.updatedAt = resultSet.getString(resultSet.getColumnIndex('updated_at'));
+      record.stepsCurrent = safeGetLong('steps_current');
+      record.stepsGoal = safeGetLong('steps_goal');
+      record.stepsDistance = safeGetDouble('steps_distance');
+      record.caloriesCurrent = safeGetLong('calories_current');
+      record.caloriesGoal = safeGetLong('calories_goal');
+
+      record.sleepDeep = safeGetDouble('sleep_deep');
+      record.sleepLight = safeGetDouble('sleep_light');
+      record.sleepTotal = safeGetDouble('sleep_total');
+      record.stressValue = safeGetLong('stress_value');
+      record.heartRate = safeGetLong('heart_rate');
+      record.bpSystolic = safeGetLong('bp_systolic');
+      record.bpDiastolic = safeGetLong('bp_diastolic');
+      record.spo2 = safeGetLong('spo2');
+      record.temperature = safeGetDouble('temperature');
+
+      record.createdAt = safeGetString('created_at');
+      record.updatedAt = safeGetString('updated_at');
 
       return record;
     } catch (error) {
@@ -734,9 +759,13 @@ export class HealthDataService {
         record.stepsDistance += (addedSteps * 0.7 / 1000); // 粗略计算
         record.caloriesCurrent += Math.floor(addedSteps * 0.04);
         
-        // 3. 模拟心率/体温波动
+        // 3. 模拟心率/体温/血氧/压力/血压波动
         record.heartRate = Math.floor(Math.random() * (100 - 60) + 60);
         record.temperature = parseFloat((36.0 + Math.random()).toFixed(1));
+        record.spo2 = Math.floor(Math.random() * (100 - 95) + 95); // 95-99%
+        record.stressValue = Math.floor(Math.random() * 60 + 20); // 20-80
+        record.bpSystolic = Math.floor(Math.random() * (130 - 110) + 110); // 110-130
+        record.bpDiastolic = Math.floor(Math.random() * (85 - 70) + 70); // 70-85
         record.updatedAt = new Date().toISOString();
         
         // 4. 更新数据库
@@ -747,8 +776,16 @@ export class HealthDataService {
         const newRecord = new HealthRecord();
         newRecord.initialize(todayStr, HealthDataService.currentUserId);
         newRecord.stepsCurrent = 1000;
-        newRecord.heartRate = 75;
         newRecord.sleepTotal = 7.0; // 假设昨晚睡了7小时
+        
+        // 初始化基础健康数据
+        newRecord.heartRate = Math.floor(Math.random() * (100 - 60) + 60);
+        newRecord.temperature = parseFloat((36.0 + Math.random()).toFixed(1));
+        newRecord.spo2 = Math.floor(Math.random() * (100 - 95) + 95);
+        newRecord.stressValue = Math.floor(Math.random() * 60 + 20);
+        newRecord.bpSystolic = Math.floor(Math.random() * (130 - 110) + 110);
+        newRecord.bpDiastolic = Math.floor(Math.random() * (85 - 70) + 70);
+        
         await HealthDataService.saveHealthData(newRecord);
         console.info('HealthDataService: 模拟数据创建成功');
       }
