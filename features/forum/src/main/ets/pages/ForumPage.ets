@@ -108,10 +108,10 @@ struct HomePage {
   // 🎨 颜色滤镜工具：让首页的小心心也能变红
   getRedFilter() {
     return [
-      1, 0, 0, 0, 0, // R
-      0, 0, 0, 0, 0, // G (置0)
-      0, 0, 0, 0, 0, // B (置0)
-      0, 0, 0, 1, 0, // A
+      0, 0, 0, 1, 0, // R = A
+      0, 0, 0, 0, 0, // G = 0
+      0, 0, 0, 0, 0, // B = 0
+      0, 0, 0, 1, 0, // A = A
     ]
   }
 
@@ -154,12 +154,10 @@ struct HomePage {
                   }.layoutWeight(1)
 
                   Row() {
-                    // ⚡️ 首页点赞变色
-                    Image($r('app.media.ic_public_favor'))
-                      .width(12).height(12)
-                    // 如果点赞了，就上红色滤镜；否则正常显示
-                      .colorFilter(item.is_liked ? this.getRedFilter() : undefined)
-                      .fillColor(item.is_liked ? Color.Red : '#999') // 双重保险
+                    // ⚡️ 首页点赞变色 - 使用系统 Symbol 实现实心效果
+                    SymbolGlyph(item.is_liked ? $r('sys.symbol.heart_fill') : $r('sys.symbol.heart'))
+                      .fontSize(12)
+                      .fontColor([item.is_liked ? Color.Red : '#999'])
                     Text(` ${item.like_count}`).fontSize(10).fontColor('#999')
                   }
                 }.padding({left: 8, right: 8, bottom: 8}).width('100%').justifyContent(FlexAlign.SpaceBetween)
@@ -228,29 +226,35 @@ struct PostDetailView {
   // 它可以强制把任何图片的像素变成你想要的颜色
 
   // 红色滤镜 (R=1, G=0, B=0)
+  // 红色滤镜 (R=1, G=0, B=0)
   getRedFilter() {
     return [
-      1, 0, 0, 0, 0,
-      0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0,
-      0, 0, 0, 1, 0,
+      0, 0, 0, 1, 0, // R = A
+      0, 0, 0, 0, 0, // G = 0
+      0, 0, 0, 0, 0, // B = 0
+      0, 0, 0, 1, 0, // A = A
     ]
   }
 
   // 黄色/金色滤镜 (R=1, G=0.8, B=0)
   getYellowFilter() {
     return [
-      1, 0, 0, 0, 0,
-      0, 1, 0, 0, 0, // G保留 100% 混合出黄色
-      0, 0, 0, 0, 0,
-      0, 0, 0, 1, 0,
+      0, 0, 0, 1, 0, // R = A
+      0, 0, 0, 0.8, 0, // G = 0.8 * A
+      0, 0, 0, 0, 0, // B = 0
+      0, 0, 0, 1, 0, // A = A
     ]
   }
 
   build() {
     NavDestination() {
       Column() {
-        Row() { Image($r('app.media.icon_back')).width(24).onClick(() => this.pageStack.pop()) }.padding(10).width('100%')
+        Row() {
+          SymbolGlyph($r('sys.symbol.chevron_left'))
+            .fontSize(24)
+            .fontColor([Color.Black])
+            .onClick(() => this.pageStack.pop())
+        }.padding(10).width('100%')
         if (this.detail) {
           List() {
             ListItem() {
@@ -290,18 +294,18 @@ struct PostDetailView {
             TextInput({ placeholder: '说点什么...', text: this.commentText }).layoutWeight(1).backgroundColor('#F5F5F5').borderRadius(20).onChange(v => this.commentText = v).onSubmit(() => this.sendComment())
             Text("发送").fontColor('#007DFF').margin({left: 10}).onClick(() => this.sendComment())
 
-            // ❤️ 点赞
-            Image($r('app.media.ic_public_favor'))
-              .width(28).height(28).margin({left: 15})
-            // ⚡️ 只有 colorFilter 是最霸道的变色方法，无视图片类型
-              .colorFilter(this.isLiked ? this.getRedFilter() : undefined)
+            // ❤️ 点赞 - 使用系统 Symbol
+            SymbolGlyph(this.isLiked ? $r('sys.symbol.heart_fill') : $r('sys.symbol.heart'))
+              .fontSize(28)
+              .fontColor([this.isLiked ? Color.Red : '#999'])
+              .margin({left: 15})
               .onClick(() => this.toggleLike())
 
-            // 💛 收藏
-            Image($r('app.media.ic_public_collection'))
-              .width(28).height(28).margin({left: 15})
-            // ⚡️ 变黄
-              .colorFilter(this.isFaved ? this.getYellowFilter() : undefined)
+            // 💛 收藏 - 使用系统 Symbol
+            SymbolGlyph(this.isFaved ? $r('sys.symbol.star_fill') : $r('sys.symbol.star'))
+              .fontSize(28)
+              .fontColor([this.isFaved ? '#FFD700' : '#999'])
+              .margin({left: 15})
               .onClick(() => this.toggleFav())
 
           }.padding(10).border({width: {top: 1}, color: '#eee'})
