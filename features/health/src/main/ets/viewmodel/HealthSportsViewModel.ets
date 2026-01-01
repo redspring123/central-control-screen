@@ -38,7 +38,9 @@ export class HealthSportsViewModel {
       result.heart.date = record.date;
       result.bloodPressure.systolic = record.bpSystolic;
       result.bloodPressure.diastolic = record.bpDiastolic;
+      result.bloodPressure.date = record.date;
       result.bloodOxygen.spo2 = record.spo2;
+      result.bloodOxygen.date = record.date;
       result.temperature.value = record.temperature;
       result.temperature.date = record.date;
     }

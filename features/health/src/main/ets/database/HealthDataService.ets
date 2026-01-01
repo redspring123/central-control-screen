@@ -221,7 +221,22 @@ export class HealthDataService {
   // 保持原有接口函数名 - 获取今日健康数据
   static async getLatestHealthData(): Promise<HealthRecord | null> {
     try {
-      return await HealthDataService.getLatestSportsData(); // 健康数据也存储在health_daily表中
+      HealthDataService.ensureInitialized();
+
+      const store = AppDatabase.getStore();
+      const predicates = new relationalStore.RdbPredicates('health_daily');
+      predicates.equalTo('user_id', HealthDataService.currentUserId);
+      predicates.orderByDesc('date');
+      predicates.limitAs(1);
+
+      const resultSet = await store.query(predicates);
+      if (resultSet.goToFirstRow()) {
+        const record = HealthDataService.resultSetToHealthRecord(resultSet);
+        resultSet.close();
+        return record;
+      }
+      resultSet.close();
+      return null;
     } catch (error) {
       console.error('HealthDataService: 获取健康数据失败', error);
       throw new Error(String(error));

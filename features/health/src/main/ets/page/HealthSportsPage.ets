@@ -50,55 +50,73 @@ export struct HealthSportsPage {
     kcalProgressStr: '0/500'
   };
 
-  aboutToAppear() {
+  async aboutToAppear() {
     // 初始化数据库服务
-    HealthSportsViewModel.init(getContext(this)).then(() => {
-      this.loadData();
-    });
+    await HealthSportsViewModel.init(getContext(this));
+    await this.loadData();
   }
 
-  onPageShow() {
-    this.loadData();
+  async onPageShow() {
+    await this.loadData();
   }
 
-  loadData() {
+  async loadData() {
+    console.info('=== HealthSportsPage: 开始加载数据 ===');
     const viewModel = new HealthSportsViewModel();
-    (async () => {
-      try {
-        const sportsData = await viewModel.getTodaySports();
-        const currentSteps = sportsData.steps?.current || 0;
-        const goalSteps = sportsData.steps?.goal || 10000;
+    try {
+      console.info('调用getTodaySports...');
+      const sportsData = await viewModel.getTodaySports();
+      console.info('运动数据:', JSON.stringify(sportsData));
+      
+      const currentSteps = sportsData.steps?.current || 0;
+      const goalSteps = sportsData.steps?.goal || 10000;
 
-        this.ui.stepsStr = currentSteps.toString();
-        this.ui.stepsPercent = (currentSteps / goalSteps) * 100;
-        this.ui.stepsProgressStr = `${currentSteps}/${goalSteps}`;
-        this.ui.distanceStr = (sportsData.steps?.distance || 0).toFixed(1) + ' km';
+      this.ui.stepsStr = currentSteps.toString();
+      this.ui.stepsPercent = (currentSteps / goalSteps) * 100;
+      this.ui.stepsProgressStr = `${currentSteps}/${goalSteps}`;
+      this.ui.distanceStr = (sportsData.steps?.distance || 0).toFixed(1) + ' km';
 
-        const currentKcal = sportsData.calories?.current || 0;
-        const goalKcal = sportsData.calories?.goal || 500;
+      const currentKcal = sportsData.calories?.current || 0;
+      const goalKcal = sportsData.calories?.goal || 500;
 
-        this.ui.kcalStr = currentKcal.toString();
-        this.ui.kcalPercent = (currentKcal / goalKcal) * 100;
-        this.ui.kcalProgressStr = `${currentKcal}/${goalKcal}`;
+      this.ui.kcalStr = currentKcal.toString();
+      this.ui.kcalPercent = (currentKcal / goalKcal) * 100;
+      this.ui.kcalProgressStr = `${currentKcal}/${goalKcal}`;
 
-        const healthData = await viewModel.getHealthData();
-        this.ui.heartRateStr = (healthData.heart.heartRate || 0) + ' bpm';
-        this.ui.sleepStr = (healthData.sleep.totalSleep || healthData.sleep.deepSleep || 0).toFixed(1) + ' h';
-        this.ui.bloodPressureStr = `${healthData.bloodPressure.systolic}/${healthData.bloodPressure.diastolic} mmHg`;
-        this.ui.spo2Str = (healthData.bloodOxygen.spo2 || 0) + ' %';
-        this.ui.tempStr = (healthData.temperature.value || 0).toFixed(1) + ' °C';
-        this.ui.stressStr = (healthData.stress.value || 0).toString();
+      console.info('调用getHealthData...');
+      const healthData = await viewModel.getHealthData();
+      console.info('健康数据:', JSON.stringify(healthData));
+      
+      console.info('heart.heartRate:', healthData.heart?.heartRate);
+      console.info('sleep.totalSleep:', healthData.sleep?.totalSleep);
+      console.info('stress.value:', healthData.stress?.value);
+      
+      this.ui.heartRateStr = (healthData.heart.heartRate || 0) + ' bpm';
+      
+      const sleepTotal = healthData.sleep.totalSleep || 0;
+      const sleepDeep = healthData.sleep.deepSleep || 0;
+      const sleepValue = sleepTotal > 0 ? sleepTotal : sleepDeep;
+      this.ui.sleepStr = sleepValue.toFixed(1) + ' h';
+      
+      this.ui.bloodPressureStr = `${healthData.bloodPressure.systolic}/${healthData.bloodPressure.diastolic} mmHg`;
+      this.ui.spo2Str = (healthData.bloodOxygen.spo2 || 0) + ' %';
+      this.ui.tempStr = (healthData.temperature.value || 0).toFixed(1) + ' °C';
+      this.ui.stressStr = (healthData.stress.value || 0).toString();
 
-        this.ui.sleepDateStr = healthData.sleep.date || '--/--';
-        this.ui.stressDateStr = healthData.stress.date || '--/--';
-        this.ui.heartDateStr = healthData.heart.date || '--/--';
-        this.ui.bpDateStr = healthData.bloodPressure.date || '--/--';
-        this.ui.spo2DateStr = healthData.bloodOxygen.date || '--/--';
-        this.ui.tempDateStr = healthData.temperature.date || '--/--';
-      } catch (error) {
-        console.error('获取运动健康数据失败:', error);
-      }
-    })();
+      this.ui.sleepDateStr = healthData.sleep.date || '--/--';
+      this.ui.stressDateStr = healthData.stress.date || '--/--';
+      this.ui.heartDateStr = healthData.heart.date || '--/--';
+      this.ui.bpDateStr = healthData.bloodPressure.date || '--/--';
+      this.ui.spo2DateStr = healthData.bloodOxygen.date || '--/--';
+      this.ui.tempDateStr = healthData.temperature.date || '--/--';
+      
+      console.info('UI更新完成');
+      console.info('heartRateStr:', this.ui.heartRateStr);
+      console.info('sleepStr:', this.ui.sleepStr);
+      console.info('stressStr:', this.ui.stressStr);
+    } catch (error) {
+      console.error('获取运动健康数据失败:', error);
+    }
   }
 
   build() {
@@ -199,12 +217,18 @@ export struct HealthSportsPage {
         // (3) 数据卡片网格 (底部区域 - 纯展示)
         // =========================================================
         Grid() {
-          GridItem() { this.DataCard('睡眠', this.ui.sleepStr, this.ui.sleepDateStr, $r('app.media.icon_sleep_quality'), '#30D158') }
-          GridItem() { this.DataCard('压力', this.ui.stressStr, this.ui.stressDateStr, $r('app.media.icon_pressure'), '#00D1FF') }
-          GridItem() { this.DataCard('心率', this.ui.heartRateStr, this.ui.heartDateStr, $r('app.media.icon_heart_rate'), '#FF375F') }
-          GridItem() { this.DataCard('血压', this.ui.bloodPressureStr, this.ui.bpDateStr, $r('app.media.icon_bloodpressure'), '#5E5CE6') }
-          GridItem() { this.DataCard('血氧', this.ui.spo2Str, this.ui.spo2DateStr, $r('app.media.icon_blood_oxygen'), '#64D2FF') }
-          GridItem() { this.DataCard('体温', this.ui.tempStr, this.ui.tempDateStr, $r('app.media.icon_body_temperature'), '#FFD60A') }
+          ForEach([
+            { title: '睡眠', value: this.ui.sleepStr, date: this.ui.sleepDateStr, icon: $r('app.media.icon_sleep_quality'), color: '#30D158', key: 'sleep' },
+            { title: '压力', value: this.ui.stressStr, date: this.ui.stressDateStr, icon: $r('app.media.icon_pressure'), color: '#00D1FF', key: 'stress' },
+            { title: '心率', value: this.ui.heartRateStr, date: this.ui.heartDateStr, icon: $r('app.media.icon_heart_rate'), color: '#FF375F', key: 'heart' },
+            { title: '血压', value: this.ui.bloodPressureStr, date: this.ui.bpDateStr, icon: $r('app.media.icon_bloodpressure'), color: '#5E5CE6', key: 'bp' },
+            { title: '血氧', value: this.ui.spo2Str, date: this.ui.spo2DateStr, icon: $r('app.media.icon_blood_oxygen'), color: '#64D2FF', key: 'spo2' },
+            { title: '体温', value: this.ui.tempStr, date: this.ui.tempDateStr, icon: $r('app.media.icon_body_temperature'), color: '#FFD60A', key: 'temp' }
+          ], (item: Record<string, Object>) => {
+            GridItem() {
+              this.DataCard(item.title as string, item.value as string, item.date as string, item.icon as Resource, item.color as string)
+            }
+          })
         }
         .columnsTemplate('1fr 1fr')
         .rowsGap(12)
@@ -224,7 +248,7 @@ export struct HealthSportsPage {
         Text(title).fontSize(14).fontColor('rgba(255,255,255,0.8)').margin({ left: 8 })
       }.width('100%').alignItems(VerticalAlign.Center)
 
-      Text(value).fontSize(24).fontWeight(FontWeight.Medium).fontColor(Color.White).margin({ top: 10 })
+      Text(value).fontSize(18).fontWeight(FontWeight.Medium).fontColor(Color.White).margin({ top: 10 })
       Text(date).fontSize(12).fontColor('rgba(255,255,255,0.5)').margin({ top: 4 })
     }
     .width('100%')
