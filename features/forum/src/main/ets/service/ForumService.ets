@@ -83,6 +83,10 @@ export class ForumService {
   static async updateProfile(params: string): Promise<ApiResponse<import('../model/ForumModel').UserInfo>> {
     return ForumService.request('/api/user/update', http.RequestMethod.POST, params);
   }
+  static async updatePost(params: string): Promise<ApiResponse<null>> {
+    // 尝试使用 /api/post_update (猜测的命名，因为 /api/post/update 报 405，/api/update_post 报 404)
+    return ForumService.request('/api/post_update', http.RequestMethod.POST, params);
+  }
 
   // 图片上传 (修复版：使用 http 替代 request.uploadFile 以获取响应体)
   static async uploadImage(context: common.UIAbilityContext, fileUri: string): Promise<string> {

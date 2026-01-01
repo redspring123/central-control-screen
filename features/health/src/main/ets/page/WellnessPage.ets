@@ -13,6 +13,7 @@ export struct WellnessPage {
   private context = getContext(this) as common.UIAbilityContext;
   @State isDarkMode: boolean = false;
   @State healthData: HealthData = new HealthData();
+  @State currentBreakpoint: string = 'xs'; // 默认设为 xs，防止初始闪烁
   private viewModel: HealthSportsViewModel = new HealthSportsViewModel();
   
   // 用户信息状态
@@ -145,102 +146,44 @@ export struct WellnessPage {
       .backgroundColor($r('app.color.header_background')) // 深色底
 
       // ============================================================
-      // 2. 主体布局 (左右分栏)
+      // 2. 主体布局 (响应式布局 + 滚动支持)
       // ============================================================
-      Row({ space: 20 }) {
+      Scroll() {
+        GridRow({
+          columns: 12,
+          gutter: { x: 20, y: 20 },
+          breakpoints: { value: ["600vp", "840vp"], reference: BreakpointsReference.WindowSize }
+        }) {
 
-        // --- 左侧列 (权重 2) ---
-        Column({ space: 20 }) {
-
-          // 2.1 顶部个人详情卡片
-          Row() {
-            // 头像
-            Image($r('app.media.user_avatar')) // [需补充图片]
-              .width(60).height(60)
-              .borderRadius(30)
-              .margin({ right: 20 })
-
-            Column({ space: 5 }) {
-              Text(this.userName).fontSize(22).fontColor(Color.White).fontWeight(FontWeight.Bold)
-              Row({ space: 10 }) {
-                Text(this.userGender).fontSize(14).fontColor(Color.White)
-                Text(`${this.userAge}岁`).fontSize(14).fontColor(Color.White)
-              }
-            }.alignItems(HorizontalAlign.Start)
-
-            Blank()
-
-            Column({ space: 5 }) {
-              Text("广东省第二人民医院").fontSize(16).fontColor(Color.White)
-              Text("入住: 神经内科").fontSize(14).fontColor($r('app.color.text_cyan'))
-            }.alignItems(HorizontalAlign.End)
-          }
-          .width('100%')
-          .padding(20)
-          // .backgroundColor($r('app.color.bg_card'))
-          // 修改为：动态半透明背景 + 毛玻璃效果
-          .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-          .backdropBlur(20)
-          .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
-          .borderRadius($r('app.float.card_radius'))
-
-          // 2.2 核心展示区 (悬浮气泡 + 右侧状态与呼叫)
-          Row({ space: 20 }) {
-
-            // A. 左侧：5个悬浮气泡 (替代3D模型)
-            Stack() {
-              // 背景光效 (可选)
-              //Circle({ width: 200, height: 200 })
-                //.fill('rgba(0, 209, 255, 0.05)')
-                //.blur(30)
-
-              // 气泡1：体温 (左上)
-              this.HealthBubble(`${this.healthData.temperature.value}°C`, "体温", -110, -100)
-              // 气泡2：心率 (右上)
-              this.HealthBubble(`${this.healthData.heart.heartRate}次`, "心率/min", 90, -110)
-              // 气泡3：血糖 (左中)
-              this.HealthBubble(`${this.healthData.bloodOxygen.spo2}%`, "血氧", -130, 20)
-              // 气泡4：血氧 (右中)
-              this.HealthBubble(`${this.healthData.bloodPressure.systolic}/${this.healthData.bloodPressure.diastolic}`, "血压", 110, 40)
-              // 气泡5：血压 (底部)
-              this.HealthBubble(`${this.healthData.stress.value}`, "压力", -20, 130)
-            }
-            .layoutWeight(1.5)
-            .height('100%')
-            .borderRadius($r('app.float.card_radius'))
-            .clip(true)
-
-            // B. 右侧：状态显示 + 一键呼叫
+          // --- 左侧列 (权重 2) ---
+          GridCol({ span: { xs: 12, sm: 8, md: 8, lg: 8 } }) {
             Column({ space: 20 }) {
 
-              // 上部分：环境与安防状态
-              Column() {
-                // 环境数据
-                Row() {
-                  Image($r('app.media.icon_sun')).width(16).height(16).margin({ right: 5 }) // [需补充]
-                  Text("光照: 13Lx").fontSize(12).fontColor(Color.White)
-                  Blank()
-                  Image($r('app.media.icon_co2')).width(16).height(16).margin({ right: 5 }) // [需补充]
-                  Text("CO2: 1305").fontSize(12).fontColor(Color.White)
-                }.width('100%').margin({ bottom: 15 })
+              // 2.1 顶部个人详情卡片
+              Row() {
+                // 头像
+                Image($r('app.media.user_avatar')) // [需补充图片]
+                  .width(60).height(60)
+                  .borderRadius(30)
+                  .margin({ right: 20 })
 
-                Divider().color('rgba(255,255,255,0.2)').margin({ bottom: 15 })
+                Column({ space: 5 }) {
+                  Text(this.userName).fontSize(22).fontColor(Color.White).fontWeight(FontWeight.Bold)
+                  Row({ space: 10 }) {
+                    Text(this.userGender).fontSize(14).fontColor(Color.White)
+                    Text(`${this.userAge}岁`).fontSize(14).fontColor(Color.White)
+                  }
+                }.alignItems(HorizontalAlign.Start)
 
-                // 状态图标
-                Row({ space: 20 }) {
-                  Column() {
-                    Image($r('app.media.icon_fall')).width(30).height(30) // [需补充]
-                    Text("未摔倒").fontSize(14).fontColor(Color.White).margin({ top: 5 })
-                  }
-                  Column() {
-                    Image($r('app.media.icon_bed_status')).width(30).height(30) // [需补充]
-                    Text("离床").fontSize(14).fontColor(Color.White).margin({ top: 5 })
-                  }
-                }.justifyContent(FlexAlign.Center).width('100%')
+                Blank()
+
+                Column({ space: 5 }) {
+                  Text("广东省第二人民医院").fontSize(16).fontColor(Color.White)
+                  Text("入住: 神经内科").fontSize(14).fontColor($r('app.color.text_cyan'))
+                }.alignItems(HorizontalAlign.End)
               }
-              .layoutWeight(1)
               .width('100%')
-              .padding(15)
+              .padding(20)
               // .backgroundColor($r('app.color.bg_card'))
               // 修改为：动态半透明背景 + 毛玻璃效果
               .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
@@ -248,77 +191,226 @@ export struct WellnessPage {
               .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
               .borderRadius($r('app.float.card_radius'))
 
-              // 下部分：一键呼叫 (大按钮)
-              Button() {
-                Row({ space: 10 }) {
-                  Image($r('app.media.icon_call_large')) // [需补充]
-                    .width(32).height(32)
-                    .fillColor(Color.White)
-                  Text("一键呼叫")
-                    .fontSize(22)
-                    .fontColor(Color.White)
-                    .fontWeight(FontWeight.Bold)
+              // 2.2 核心展示区 (悬浮气泡 + 右侧状态与呼叫)
+              if (this.currentBreakpoint === 'xs') {
+                // === 竖屏模式：列表展示 ===
+                Column({ space: 15 }) {
+                  // 1. 健康数据列表 (使用 Column 替代 List 以避免嵌套滚动冲突)
+                  Column({ space: 10 }) {
+                    this.HealthListItem("体温", `${this.healthData.temperature.value}°C`, $r('app.media.icon_body_temperature'))
+                    this.HealthListItem("心率", `${this.healthData.heart.heartRate}次/min`, $r('app.media.icon_heart_rate'))
+                    this.HealthListItem("血氧", `${this.healthData.bloodOxygen.spo2}%`, $r('app.media.icon_blood_oxygen'))
+                    this.HealthListItem("血压", `${this.healthData.bloodPressure.systolic}/${this.healthData.bloodPressure.diastolic}`, $r('app.media.icon_pressure'))
+                    this.HealthListItem("压力", `${this.healthData.stress.value}`, $r('app.media.heart_waves_fill'))
+                  }
+                  .width('100%')
+                  // .height(320) // 移除固定高度，让其自适应
+
+                  // 2. 状态显示 + 一键呼叫 (复用原有逻辑，但调整布局)
+                  Column({ space: 15 }) {
+                     // 环境与安防状态
+                     Column() {
+                        Row() {
+                          Image($r('app.media.icon_sun')).width(16).height(16).margin({ right: 5 })
+                          Text("光照: 13Lx").fontSize(12).fontColor(Color.White)
+                          Blank()
+                          Image($r('app.media.icon_co2')).width(16).height(16).margin({ right: 5 })
+                          Text("CO2: 1305").fontSize(12).fontColor(Color.White)
+                        }.width('100%').margin({ bottom: 15 })
+                        Divider().color('rgba(255,255,255,0.2)').margin({ bottom: 15 })
+                        Row({ space: 20 }) {
+                          Column() { Image($r('app.media.icon_fall')).width(30).height(30); Text("未摔倒").fontSize(14).fontColor(Color.White).margin({ top: 5 }) }
+                          Column() { Image($r('app.media.icon_bed_status')).width(30).height(30); Text("离床").fontSize(14).fontColor(Color.White).margin({ top: 5 }) }
+                        }.justifyContent(FlexAlign.Center).width('100%')
+                     }
+                     .padding(15)
+                     .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+                     .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius($r('app.float.card_radius'))
+
+                     // 一键呼叫
+                     Button() {
+                        Row({ space: 10 }) {
+                          Image($r('app.media.icon_call_large')).width(32).height(32).fillColor(Color.White)
+                          Text("一键呼叫").fontSize(22).fontColor(Color.White).fontWeight(FontWeight.Bold)
+                        }
+                     }
+                     .width('100%').height(80)
+                     .backgroundColor($r('app.color.btn_call_bg'))
+                     .borderRadius($r('app.float.card_radius'))
+                     .onClick(() => NavigationModel.handleJump('btn_one_key_call'))
+                  }
                 }
+              } else {
+                // === 横屏模式：原有气泡布局 ===
+                Row({ space: 20 }) {
+                  // A. 左侧：5个悬浮气泡 (替代3D模型)
+                  Stack() {
+                    // 气泡1：体温 (左上)
+                    this.HealthBubble(`${this.healthData.temperature.value}°C`, "体温", -110, -100)
+                    // 气泡2：心率 (右上)
+                    this.HealthBubble(`${this.healthData.heart.heartRate}次`, "心率/min", 90, -110)
+                    // 气泡3：血糖 (左中)
+                    this.HealthBubble(`${this.healthData.bloodOxygen.spo2}%`, "血氧", -130, 20)
+                    // 气泡4：血氧 (右中)
+                    this.HealthBubble(`${this.healthData.bloodPressure.systolic}/${this.healthData.bloodPressure.diastolic}`, "血压", 110, 40)
+                    // 气泡5：血压 (底部)
+                    this.HealthBubble(`${this.healthData.stress.value}`, "压力", -20, 130)
+                  }
+                  .layoutWeight(1.5)
+                  .height('100%')
+                  .borderRadius($r('app.float.card_radius'))
+                  .clip(true)
+
+                  // B. 右侧：状态显示 + 一键呼叫
+                  Column({ space: 20 }) {
+                    // 上部分：环境与安防状态
+                    Column() {
+                      // 环境数据
+                      Row() {
+                        Image($r('app.media.icon_sun')).width(16).height(16).margin({ right: 5 }) // [需补充]
+                        Text("光照: 13Lx").fontSize(12).fontColor(Color.White)
+                        Blank()
+                        Image($r('app.media.icon_co2')).width(16).height(16).margin({ right: 5 }) // [需补充]
+                        Text("CO2: 1305").fontSize(12).fontColor(Color.White)
+                      }.width('100%').margin({ bottom: 15 })
+
+                      Divider().color('rgba(255,255,255,0.2)').margin({ bottom: 15 })
+
+                      // 状态图标
+                      Row({ space: 20 }) {
+                        Column() {
+                          Image($r('app.media.icon_fall')).width(30).height(30) // [需补充]
+                          Text("未摔倒").fontSize(14).fontColor(Color.White).margin({ top: 5 })
+                        }
+                        Column() {
+                          Image($r('app.media.icon_bed_status')).width(30).height(30) // [需补充]
+                          Text("离床").fontSize(14).fontColor(Color.White).margin({ top: 5 })
+                        }
+                      }.justifyContent(FlexAlign.Center).width('100%')
+                    }
+                    .layoutWeight(1)
+                    .width('100%')
+                    .padding(15)
+                    // .backgroundColor($r('app.color.bg_card'))
+                    // 修改为：动态半透明背景 + 毛玻璃效果
+                    .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+                    .backdropBlur(20)
+                    .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
+                    .borderRadius($r('app.float.card_radius'))
+
+                    // 下部分：一键呼叫 (大按钮)
+                    Button() {
+                      Row({ space: 10 }) {
+                        Image($r('app.media.icon_call_large')) // [需补充]
+                          .width(32).height(32)
+                          .fillColor(Color.White)
+                        Text("一键呼叫")
+                          .fontSize(22)
+                          .fontColor(Color.White)
+                          .fontWeight(FontWeight.Bold)
+                      }
+                    }
+                    .width('100%')
+                    .height(100)
+                    .backgroundColor($r('app.color.btn_call_bg')) // 红色背景
+                    .borderRadius($r('app.float.card_radius'))
+                    .onClick(() => {
+                      // 调用接口：一键呼叫
+                      NavigationModel.handleJump('btn_one_key_call');
+                    })
+                  }
+                  .layoutWeight(1)
+                  .height('100%')
+                }
+                .layoutWeight(1)
+                .height(this.currentBreakpoint === 'xs' ? 400 : undefined) // 手机模式下给个固定高度
               }
-              .width('100%')
-              .height(100)
-              .backgroundColor($r('app.color.btn_call_bg')) // 红色背景
-              .borderRadius($r('app.float.card_radius'))
-              .onClick(() => {
-                // 调用接口：一键呼叫
-                NavigationModel.handleJump('btn_one_key_call');
-              })
             }
-            .layoutWeight(1)
-            .height('100%')
+            .height(this.currentBreakpoint === 'xs' ? undefined : '100%')
           }
-          .layoutWeight(1)
-        }
-        .layoutWeight(2)
-        .height('100%')
 
-        // --- 右侧列 (Grid 菜单 - 使用你提供的10张图) ---
-        Column() {
-          Grid() {
-            ForEach(this.menuList, (item: MenuItem) => {
-              GridItem() {
-                Column() {
-                  // 图标区域
-                  Image(item.iconImg)
-                    .width(48)
-                    .height(48)
-                    .objectFit(ImageFit.Contain)
-                    .margin({ bottom: 10 })
+          // --- 右侧列 (Grid 菜单 - 使用你提供的10张图) ---
+          GridCol({ span: { xs: 12, sm: 4, md: 4, lg: 4 } }) {
+            Column() {
+              if (this.currentBreakpoint === 'xs') {
+                // 手机模式：使用 Flex 布局自动换行，避免 Grid 滚动冲突
+                Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceBetween }) {
+                  ForEach(this.menuList, (item: MenuItem) => {
+                    Column() {
+                      // 图标区域
+                      Image(item.iconImg)
+                        .width(48)
+                        .height(48)
+                        .objectFit(ImageFit.Contain)
+                        .margin({ bottom: 10 })
 
-                  Text(item.title)
-                    .fontSize(16)
-                    .fontColor(Color.White)
+                      Text(item.title)
+                        .fontSize(16)
+                        .fontColor(Color.White)
+                    }
+                    .width('48%') // 2列，留间隙
+                    .height(120)
+                    .justifyContent(FlexAlign.Center)
+                    .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+                    .backdropBlur(20)
+                    .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
+                    .borderRadius($r('app.float.card_radius'))
+                    .margin({ bottom: 12 })
+                    .onClick(() => {
+                      NavigationModel.handleJump(item.key);
+                    })
+                  })
                 }
-                .width('100%').height('100%')
-                .justifyContent(FlexAlign.Center)
-                // .backgroundColor($r('app.color.bg_card')) // 确保你的 color.json 里的 bg_card 是半透明的
-                // 修改为：动态半透明背景 + 毛玻璃效果
-                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-                .backdropBlur(20)
-                .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
-                .borderRadius($r('app.float.card_radius'))
-                .onClick(() => {
-                  NavigationModel.handleJump(item.key);
-                })
+                .width('100%')
+              } else {
+                // 平板/大屏模式：使用 Grid
+                Grid() {
+                  ForEach(this.menuList, (item: MenuItem) => {
+                    GridItem() {
+                      Column() {
+                        // 图标区域
+                        Image(item.iconImg)
+                          .width(48)
+                          .height(48)
+                          .objectFit(ImageFit.Contain)
+                          .margin({ bottom: 10 })
+
+                        Text(item.title)
+                          .fontSize(16)
+                          .fontColor(Color.White)
+                      }
+                      .width('100%').height('100%')
+                      .justifyContent(FlexAlign.Center)
+                      .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+                      .backdropBlur(20)
+                      .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
+                      .borderRadius($r('app.float.card_radius'))
+                      .onClick(() => {
+                        NavigationModel.handleJump(item.key);
+                      })
+                    }
+                  })
+                }
+                .columnsTemplate('1fr 1fr') // 2 列
+                .rowsTemplate('1fr 1fr 1fr 1fr 1fr') // 5 行
+                .rowsGap(12).columnsGap(12)
+                .width('100%')
+                .height('100%')
               }
-            })
+            }
+            .height(this.currentBreakpoint === 'xs' ? undefined : '100%')
           }
-          .columnsTemplate('1fr 1fr') // 2 列
-          // 【关键修正】↓↓↓ 加上这行，把高度平均分成 5 行 ↓↓↓
-          .rowsTemplate('1fr 1fr 1fr 1fr 1fr')
-          .rowsGap(12).columnsGap(12)
-          .width('100%').height('100%')
         }
-        .layoutWeight(1)
-        .height('100%')
+        .onBreakpointChange((breakpoint: string) => {
+          this.currentBreakpoint = breakpoint;
+        })
+        .width('100%')
+        .height(this.currentBreakpoint === 'xs' ? undefined : '100%') // 手机模式下高度自适应
       }
       .width('100%')
       .layoutWeight(1)
+      .scrollBar(BarState.Auto)
+      .align(Alignment.TopStart)
       .padding(20)
     }
     .width('100%')
@@ -328,7 +420,23 @@ export struct WellnessPage {
     .backgroundImageSize(ImageSize.Cover)
   }
 
-  // --- 气泡构建函数 ---
+  // --- 列表项构建函数 (竖屏用) ---
+  @Builder HealthListItem(label: string, value: string, icon: Resource) {
+    Row() {
+      Image(icon).width(24).height(24).fillColor(Color.White).margin({ right: 10 })
+      Text(label).fontSize(16).fontColor(Color.White)
+      Blank()
+      Text(value).fontSize(18).fontColor($r('app.color.text_cyan')).fontWeight(FontWeight.Bold)
+    }
+    .width('100%')
+    .padding(15)
+    .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+    .backdropBlur(20)
+    .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
+    .borderRadius($r('app.float.card_radius'))
+  }
+
+  // --- 气泡构建函数 (横屏用) ---
   @Builder HealthBubble(value: string, label: string, x: number, y: number) {
     Column() {
       // 增加判空显示，如果为0或空则显示 --

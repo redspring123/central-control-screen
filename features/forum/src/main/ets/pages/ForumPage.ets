@@ -1,5 +1,5 @@
 import { ForumService } from '../service/ForumService';
-import { ForumPost, UserInfo, PostDetailData, ProfileData, Comment } from '../model/ForumModel';
+import { ForumPost, UserInfo, PostDetailData, ProfileData, Comment, ApiResponse } from '../model/ForumModel';
 import { promptAction } from '@kit.ArkUI';
 import { picker, fileIo as fs } from '@kit.CoreFileKit';
 import { request } from '@kit.BasicServicesKit';
@@ -49,6 +49,14 @@ class PostParams {
   constructor(id: number) { this.id = id }
 }
 
+class PublishParams {
+  postId?: number
+  title?: string
+  content?: string
+  tags?: string
+  images?: string[]
+}
+
 AppStorage.setOrCreate('currentUserId', 0);
 AppStorage.setOrCreate('refreshFeed', 0);
 
@@ -91,7 +99,15 @@ export struct ForumPage {
 
   @Builder PagesMap(name: string, param: object) {
     if (name === 'PostDetail') PostDetailView({ postId: (param as PostParams).id })
-    else if (name === 'PublishPage') PublishView()
+    else if (name === 'PublishPage') {
+      PublishView({
+        editPostId: (param as PublishParams)?.postId || 0,
+        title: (param as PublishParams)?.title || '',
+        content: (param as PublishParams)?.content || '',
+        tags: (param as PublishParams)?.tags || '',
+        uploadedUrl: ((param as PublishParams)?.images && (param as PublishParams).images!.length > 0) ? (param as PublishParams).images![0] : ''
+      })
+    }
     else if (name === 'UserProfile') ProfileView({ userId: (param as PostParams).id, isSelf: false })
   }
 
@@ -221,6 +237,7 @@ struct HomePage {
 // ===================== 帖子详情 (⚡️修复变色问题) =====================
 @Component
 struct PostDetailView {
+  @StorageLink('currentUserId') currentUserId: number = 0;
   @Consume('pageStack') pageStack: NavPathStack;
   postId: number = 0;
   @State detail: PostDetailData | null = null;
@@ -300,6 +317,24 @@ struct PostDetailView {
             .fontSize(24)
             .fontColor([Color.Black])
             .onClick(() => this.pageStack.pop())
+          
+          Blank()
+          
+          // ✏️ 编辑按钮：只有作者自己可见
+          if (this.detail && this.currentUserId === this.detail.post.user_id) {
+            Text("编辑")
+              .fontSize(16)
+              .fontColor('#333')
+              .onClick(() => {
+                const p = new PublishParams();
+                p.postId = this.detail?.post.id;
+                p.title = this.detail?.post.title;
+                p.content = this.detail?.post.content;
+                p.tags = this.detail?.post.tags;
+                p.images = this.detail?.post.images;
+                this.pageStack.pushPath({ name: 'PublishPage', param: p });
+              })
+          }
         }.padding(10).width('100%')
         if (this.detail) {
           List() {
@@ -534,6 +569,7 @@ struct EditProfileDialog {
 @Component
 struct PublishView {
   @Consume('pageStack') pageStack: NavPathStack;
+  @State editPostId: number = 0; // 0表示新建，>0表示编辑
   @State title: string = '';
   @State content: string = '';
   @State tags: string = '';
@@ -572,12 +608,24 @@ struct PublishView {
   async doPublish() {
     const uid = AppStorage.get<number>('currentUserId');
     const finalImg = this.uploadedUrl ? `["${this.uploadedUrl}"]` : '["/uploads/default_post.jpg"]';
-    const params = `user_id=${uid}&title=${this.title}&content=${this.content}&tags=${this.tags}&images=${finalImg}`;
-    const res = await ForumService.publish(params);
+    
+    let res: ApiResponse<null>;
+    if (this.editPostId > 0) {
+      // 编辑模式
+      const params = `post_id=${this.editPostId}&user_id=${uid}&title=${this.title}&content=${this.content}&tags=${this.tags}&images=${finalImg}`;
+      res = await ForumService.updatePost(params);
+    } else {
+      // 发布模式
+      const params = `user_id=${uid}&title=${this.title}&content=${this.content}&tags=${this.tags}&images=${finalImg}`;
+      res = await ForumService.publish(params);
+    }
+
     if (res.success) {
-      promptAction.showToast({message: '发布成功!'});
+      promptAction.showToast({message: this.editPostId > 0 ? '修改成功!' : '发布成功!'});
       AppStorage.setOrCreate('refreshFeed', Date.now()); // 触发刷新
       this.pageStack.pop();
+    } else {
+      promptAction.showToast({message: res.message || (this.editPostId > 0 ? '修改失败' : '发布失败')});
     }
   }
 
@@ -587,14 +635,20 @@ struct PublishView {
         Row() {
           Text("取消").onClick(() => this.pageStack.pop()).fontSize(16)
           Blank()
-          Button("发布").height(32).backgroundColor('#FF2442').fontSize(14).onClick(() => this.doPublish())
+          Button(this.editPostId > 0 ? "保存" : "发布").height(32).backgroundColor('#FF2442').fontSize(14).onClick(() => this.doPublish())
         }.padding(15).width('100%')
         TextInput({ placeholder: '标题', text: this.title }).fontSize(18).fontWeight(FontWeight.Bold).margin(10).onChange(v=>this.title=v)
         TextArea({ placeholder: '正文...', text: this.content }).height(100).margin(10).backgroundColor(Color.Transparent).onChange(v=>this.content=v)
         TextInput({ placeholder: '#标签', text: this.tags }).margin(10).onChange(v=>this.tags=v)
         Row() {
-          if (this.selectedImage) Image(this.selectedImage).width(100).height(100).borderRadius(8).onClick(()=>this.selectImage())
-          else Image($r('app.media.ic_public_add')).width(80).height(80).backgroundColor('#F5F5F5').padding(25).onClick(()=>this.selectImage())
+          if (this.selectedImage) {
+             Image(this.selectedImage).width(100).height(100).borderRadius(8).onClick(()=>this.selectImage())
+          } else if (this.uploadedUrl) {
+             // 编辑模式下显示已有图片
+             Image(getImageUrl(this.uploadedUrl)).width(100).height(100).borderRadius(8).onClick(()=>this.selectImage())
+          } else {
+             Image($r('app.media.ic_public_add')).width(80).height(80).backgroundColor('#F5F5F5').padding(25).onClick(()=>this.selectImage())
+          }
         }.padding(15).width('100%').justifyContent(FlexAlign.Start)
       }
     }.hideTitleBar(true)

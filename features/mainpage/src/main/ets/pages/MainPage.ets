@@ -277,150 +277,155 @@ export struct MainPage {
       }.backgroundColor($r('app.color.top')).width('100%').padding(15)
 
       // 2. 主体内容：使用 GridRow 实现响应式布局 (手机竖排，平板横排)
-      GridRow({
-        columns: 12,
-        gutter: { x: 15, y: 15 }, // 水平和垂直间距
-        breakpoints: { value: ["600vp", "840vp"], reference: BreakpointsReference.WindowSize }
-      }) {
+      Scroll() {
+        GridRow({
+          columns: 12,
+          gutter: { x: 15, y: 15 }, // 水平和垂直间距
+          breakpoints: { value: ["600vp", "840vp"], reference: BreakpointsReference.WindowSize }
+        }) {
 
-        // --- A. 左侧：场景按钮 + 天气 ---
-        // sm(手机): 占满12列 (换行显示)
-        // md(平板): 占4列 (左侧显示)
-        GridCol({ span: { sm: 12, md: 4, lg: 3 } }) {
-          Column({ space: 10 }) { // 增加间距
-            // Grid 场景按钮
+          // --- A. 左侧：场景按钮 + 天气 ---
+          // sm(手机): 占满12列 (换行显示)
+          // md(平板): 占4列 (左侧显示)
+          GridCol({ span: { sm: 12, md: 4, lg: 3 } }) {
+            Column({ space: 10 }) { // 增加间距
+              // Grid 场景按钮
+              Grid() {
+                ForEach(this.sceneList, (item: btn) => {
+                  GridItem() {
+                    Button() {
+                      Row() {
+                        Column() { Image($r(`app.media.${item.icon}`)).width(20).height(20) }
+                        .width(36).height(36).backgroundColor($r('app.color.bg_icon_container')).borderRadius(10).justifyContent(FlexAlign.Center).margin({ right: 10 })
+                        Text($r(`app.string.${item.key}`)).fontSize(14).fontColor(Color.White).layoutWeight(1)
+                      }.width('100%').padding(8)
+                    }
+                    .type(ButtonType.Normal)
+                    .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+                    .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius(12)
+                    .width('100%').height(60)
+                    .onClick(() => RouterHelper.jump(item.key))
+                  }
+                }, (item: btn) => item.key)
+              }
+              .columnsTemplate('1fr 1fr')
+              .rowsGap(10).columnsGap(10)
+              .height(this.showHome ? (this.currentBreakpoint === 'sm' ? 280 : 280) : 0) // 简单适配
+
+              // 天气卡片
+              Row() {
+                Image($r(`app.media.ic_${this.weatherIcon}`)).width(40).height(40).margin({ right: 10, left: 10 })
+                Column() {
+                  Text(this.weatherTempText).fontSize(24).fontWeight(FontWeight.Bold).fontColor(Color.White)
+                  Text(this.weatherConditionText).fontSize(12).fontColor(Color.White).opacity(0.8)
+                }.alignItems(HorizontalAlign.Start)
+                Blank()
+                Text(this.weatherTipText).fontSize(12).fontColor(Color.White).opacity(0.8).maxLines(2).textOverflow({overflow:TextOverflow.Ellipsis}).width('40%').margin({right:10})
+              }
+              .width('100%').height(80) // 固定高度
+              .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+              .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius(12)
+
+              // AI 健康助手入口
+              Row() {
+                SymbolGlyph($r('sys.symbol.heart_fill'))//系统内置图标
+                  .fontSize(32)
+                  .width(40)
+                  .height(40)
+                  .margin({ right: 10, left: 10 })
+                  .fontColor([Color.Red])
+                Column() {
+                  Text("健康助手").fontSize(18).fontWeight(FontWeight.Bold).fontColor(Color.White)
+                  Text("AI 智能分析").fontSize(12).fontColor(Color.White).opacity(0.8)
+                }.alignItems(HorizontalAlign.Start)
+                Blank()
+              }
+              .width('100%').height(80)
+              .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+              .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius(12)
+              .onClick(() => {
+                router.pushNamedRoute({ name: 'HealthAssistantPage' });
+              })
+            }
+          }
+
+          // --- B. 右侧：可增删的卡片 Grid ---
+          // sm(手机): 占满12列
+          // md(平板): 占8列
+          GridCol({ span: { sm: 12, md: 8, lg: 9 } }) {
             Grid() {
-              ForEach(this.sceneList, (item: btn) => {
+              // 1. 渲染已添加的卡片
+              ForEach(this.displayedCards, (key: string, index: number) => {
+                GridItem() {
+                  Stack({ alignContent: Alignment.TopEnd }) {
+                    // (1) 卡片内容主体
+                    Column() {
+                      this.RenderCardByKey(key)
+                    }
+                    .width('100%').height('100%')
+                    .padding(15)
+
+                    // (2) 删除按钮
+                    Button() {
+                      Image($r('app.media.ic_public_cancel'))
+                        .width(16).height(16)
+                        .fillColor('rgba(255,255,255,0.6)')
+                    }
+                    .type(ButtonType.Circle)
+                    .backgroundColor('rgba(0,0,0,0.2)')
+                    .width(24).height(24)
+                    .margin({ top: 5, right: 5 })
+                    .onClick(() => {
+                      this.displayedCards.splice(index, 1);
+                    })
+                  }
+                  .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
+                  .backdropBlur(20)
+                  .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
+                  .borderRadius(16)
+                  .width('100%')
+                  .height(this.currentBreakpoint === 'sm' ? 180 : '100%') // 手机模式下给个固定高度，平板模式下撑满
+                }
+              }, (key: string) => key)
+
+              // 2. 渲染“添加”按钮
+              if (this.displayedCards.length < 6) {
                 GridItem() {
                   Button() {
-                    Row() {
-                      Column() { Image($r(`app.media.${item.icon}`)).width(20).height(20) }
-                      .width(36).height(36).backgroundColor($r('app.color.bg_icon_container')).borderRadius(10).justifyContent(FlexAlign.Center).margin({ right: 10 })
-                      Text($r(`app.string.${item.key}`)).fontSize(14).fontColor(Color.White).layoutWeight(1)
-                    }.width('100%').padding(8)
+                    Column() {
+                      Text("+").fontSize(40).fontColor('rgba(255,255,255,0.5)').fontWeight(FontWeight.Lighter)
+                      Text("添加卡片").fontSize(12).fontColor('rgba(255,255,255,0.5)')
+                    }
                   }
                   .type(ButtonType.Normal)
-                  .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-                  .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius(12)
-                  .width('100%').height(60)
-                  .onClick(() => RouterHelper.jump(item.key))
-                }
-              }, (item: btn) => item.key)
-            }
-            .columnsTemplate('1fr 1fr')
-            .rowsGap(10).columnsGap(10)
-            .height(this.showHome ? 280 : 0) // 简单适配：手机上可能需要限制高度，或者让它自适应
-
-            // 天气卡片
-            Row() {
-              Image($r(`app.media.ic_${this.weatherIcon}`)).width(40).height(40).margin({ right: 10, left: 10 })
-              Column() {
-                Text(this.weatherTempText).fontSize(24).fontWeight(FontWeight.Bold).fontColor(Color.White)
-                Text(this.weatherConditionText).fontSize(12).fontColor(Color.White).opacity(0.8)
-              }.alignItems(HorizontalAlign.Start)
-              Blank()
-              Text(this.weatherTipText).fontSize(12).fontColor(Color.White).opacity(0.8).maxLines(2).textOverflow({overflow:TextOverflow.Ellipsis}).width('40%').margin({right:10})
-            }
-            .width('100%').height(80) // 固定高度
-            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-            .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius(12)
-
-            // AI 健康助手入口
-            Row() {
-              SymbolGlyph($r('sys.symbol.heart_fill'))//系统内置图标
-                .fontSize(32)
-                .width(40)
-                .height(40)
-                .margin({ right: 10, left: 10 })
-                .fontColor([Color.Red])
-              Column() {
-                Text("健康助手").fontSize(18).fontWeight(FontWeight.Bold).fontColor(Color.White)
-                Text("AI 智能分析").fontSize(12).fontColor(Color.White).opacity(0.8)
-              }.alignItems(HorizontalAlign.Start)
-              Blank()
-            }
-            .width('100%').height(80)
-            .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-            .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius(12)
-            .onClick(() => {
-              router.pushNamedRoute({ name: 'HealthAssistantPage' });
-            })
-          }
-        }
-
-        // --- B. 右侧：可增删的卡片 Grid ---
-        // sm(手机): 占满12列
-        // md(平板): 占8列
-        GridCol({ span: { sm: 12, md: 8, lg: 9 } }) {
-          Grid() {
-            // 1. 渲染已添加的卡片
-            ForEach(this.displayedCards, (key: string, index: number) => {
-              GridItem() {
-                Stack({ alignContent: Alignment.TopEnd }) {
-                  // (1) 卡片内容主体
-                  Column() {
-                    this.RenderCardByKey(key)
-                  }
-                  .width('100%').height('100%')
-                  .padding(15)
-
-                  // (2) 删除按钮
-                  Button() {
-                    Image($r('app.media.ic_public_cancel'))
-                      .width(16).height(16)
-                      .fillColor('rgba(255,255,255,0.6)')
-                  }
-                  .type(ButtonType.Circle)
-                  .backgroundColor('rgba(0,0,0,0.2)')
-                  .width(24).height(24)
-                  .margin({ top: 5, right: 5 })
+                  .backgroundColor('rgba(255, 255, 255, 0.05)')
+                  .border({ width: 1, color: 'rgba(255, 255, 255, 0.1)', style: BorderStyle.Dashed })
+                  .borderRadius(16)
+                  .width('100%')
+                  .height(this.currentBreakpoint === 'sm' ? 180 : '100%')
                   .onClick(() => {
-                    this.displayedCards.splice(index, 1);
+                    this.dialogController.open()
                   })
                 }
-                .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
-                .backdropBlur(20)
-                .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
-                .borderRadius(16)
-                .width('100%')
-                .height('100%')
               }
-            }, (key: string) => key)
 
-            // 2. 渲染“添加”按钮
-            if (this.displayedCards.length < 6) {
-              GridItem() {
-                Button() {
-                  Column() {
-                    Text("+").fontSize(40).fontColor('rgba(255,255,255,0.5)').fontWeight(FontWeight.Lighter)
-                    Text("添加卡片").fontSize(12).fontColor('rgba(255,255,255,0.5)')
-                  }
-                }
-                .type(ButtonType.Normal)
-                .backgroundColor('rgba(255, 255, 255, 0.05)')
-                .border({ width: 1, color: 'rgba(255, 255, 255, 0.1)', style: BorderStyle.Dashed })
-                .borderRadius(16)
-                .width('100%')
-                .height('100%')
-                .onClick(() => {
-                  this.dialogController.open()
-                })
-              }
             }
-
+            .columnsTemplate('1fr 1fr')
+            .rowsTemplate(this.currentBreakpoint === 'sm' ? undefined : '1fr 1fr 1fr') // 手机模式下不固定行数，允许滚动
+            .rowsGap(15)
+            .columnsGap(15)
+            .height(this.currentBreakpoint === 'sm' ? undefined : '100%') // 手机模式下高度自适应
           }
-          .columnsTemplate('1fr 1fr')
-          .rowsTemplate('1fr 1fr 1fr') // 恢复固定三行，保证卡片大小一致
-          .rowsGap(15)
-          .columnsGap(15)
-          .height(this.currentBreakpoint === 'sm' ? '400vp' : '100%') // 手机上固定高度，平板上撑满
-        }
 
+        }
+        .onBreakpointChange((breakpoint: string) => {
+          this.currentBreakpoint = breakpoint;
+        })
+        .width('100%').padding(15)
       }
-      .onBreakpointChange((breakpoint: string) => {
-        this.currentBreakpoint = breakpoint;
-      })
-      .width('100%').layoutWeight(1).padding(15)
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+      .align(Alignment.TopStart)
     }
     .width('100%').height('100%')
     .backgroundColor($r('app.color.bg_page'))
