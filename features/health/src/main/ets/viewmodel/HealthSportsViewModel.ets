@@ -1,40 +1,93 @@
-
-
-import { http } from '@kit.NetworkKit';
+import { Context } from '@kit.AbilityKit';
 import { TodaySportsData, HealthData, DatabaseResult } from '../model/SportsDataModel';
-import { MockDataService } from '../model/MockDataService';
-import { HealthDatabase } from '../database/HealthDatabase';
+import { HealthDataService, HealthRecord, AIAdviceResponse } from '../database/HealthDataService';
 
 export class HealthSportsViewModel {
-  private baseUrl: string = 'https://your-api-domain.com/api';//在这里填入后端的baseUrl
-  private useMockData: boolean = true;
+  constructor() {}
 
-  constructor() {
-    HealthDatabase.setContext(getContext(this));
+  // 初始化视图模型
+  static async init(context: Context): Promise<void> {
+    await HealthDataService.init(context);
   }
 
   async getTodaySports(): Promise<TodaySportsData> {
-    if (this.useMockData) {
-      return MockDataService.getTodaySports();
+    const record = await HealthDataService.getLatestSportsData();
+    const result = new TodaySportsData();
+
+    if (record) {
+      result.steps.current = record.stepsCurrent;
+      result.steps.goal = record.stepsGoal;
+      result.steps.distance = record.stepsDistance;
+      result.calories.current = record.caloriesCurrent;
+      result.calories.goal = record.caloriesGoal;
     }
-    return this.requestTodaySportsFromApi();
+
+    return result;
   }
 
   async getHealthData(): Promise<HealthData> {
-    if (this.useMockData) {
-      return MockDataService.getHealthData();
+    const record = await HealthDataService.getLatestHealthData();
+    const result = new HealthData();
+
+    if (record) {
+      result.sleep.deepSleep = record.sleepDeep;
+      result.sleep.date = record.date;
+      result.stress.value = record.stressValue;
+      result.stress.date = record.date;
+      result.heart.heartRate = record.heartRate;
+      result.heart.date = record.date;
+      result.bloodPressure.systolic = record.bpSystolic;
+      result.bloodPressure.diastolic = record.bpDiastolic;
+      result.bloodOxygen.spo2 = record.spo2;
+      result.temperature.value = record.temperature;
+      result.temperature.date = record.date;
     }
-    return this.requestHealthDataFromApi();
+
+    return result;
   }
 
   async loadDataFromDatabase(): Promise<DatabaseResult> {
     try {
-      const sportsData = await HealthDatabase.getLatestSportsData();
-      const healthData = await HealthDatabase.getLatestHealthData();
+      const sportsRecord = await HealthDataService.getLatestSportsData();
+      const healthRecord = await HealthDataService.getLatestHealthData();
       console.info('从数据库加载数据成功');
+
       const result = new DatabaseResult();
-      result.sports = sportsData;
-      result.health = healthData;
+
+      if (sportsRecord) {
+        const sportsData = new TodaySportsData();
+        sportsData.steps.current = sportsRecord.stepsCurrent;
+        sportsData.steps.goal = sportsRecord.stepsGoal;
+        sportsData.steps.distance = sportsRecord.stepsDistance;
+        sportsData.calories.current = sportsRecord.caloriesCurrent;
+        sportsData.calories.goal = sportsRecord.caloriesGoal;
+        result.sports = sportsData;
+      } else {
+        result.sports = null;
+      }
+
+      if (healthRecord) {
+        const healthData = new HealthData();
+        healthData.sleep.deepSleep = healthRecord.sleepDeep;
+        healthData.sleep.lightSleep = healthRecord.sleepLight;
+        healthData.sleep.totalSleep = healthRecord.sleepTotal;
+        healthData.sleep.date = healthRecord.date;
+        healthData.stress.value = healthRecord.stressValue;
+        healthData.stress.date = healthRecord.date;
+        healthData.heart.heartRate = healthRecord.heartRate;
+        healthData.heart.date = healthRecord.date;
+        healthData.bloodPressure.systolic = healthRecord.bpSystolic;
+        healthData.bloodPressure.diastolic = healthRecord.bpDiastolic;
+        healthData.bloodPressure.date = healthRecord.date;
+        healthData.bloodOxygen.spo2 = healthRecord.spo2;
+        healthData.bloodOxygen.date = healthRecord.date;
+        healthData.temperature.value = healthRecord.temperature;
+        healthData.temperature.date = healthRecord.date;
+        result.health = healthData;
+      } else {
+        result.health = null;
+      }
+
       return result;
     } catch (error) {
       console.error(`从数据库加载数据失败: ${JSON.stringify(error)}`);
@@ -47,89 +100,109 @@ export class HealthSportsViewModel {
 
   async syncDataToDatabase(sportsData: TodaySportsData, healthData: HealthData): Promise<void> {
     try {
-      await HealthDatabase.saveSportsData(sportsData);
-      await HealthDatabase.saveHealthData(healthData);
+      const record = new HealthRecord();
+      const date: string = new Date().toISOString().split('T')[0];
+      const userId: number = HealthDataService.getCurrentUserId();
+      record.initialize(date, userId);
+
+      record.stepsCurrent = sportsData.steps.current;
+      record.stepsGoal = sportsData.steps.goal;
+      record.stepsDistance = sportsData.steps.distance;
+      record.caloriesCurrent = sportsData.calories.current;
+      record.caloriesGoal = sportsData.calories.goal;
+
+      record.sleepDeep = healthData.sleep.deepSleep;
+      record.sleepLight = 0;
+      record.sleepTotal = healthData.sleep.deepSleep;
+      record.stressValue = healthData.stress.value;
+      record.heartRate = healthData.heart.heartRate;
+      record.bpSystolic = healthData.bloodPressure.systolic;
+      record.bpDiastolic = healthData.bloodPressure.diastolic;
+      record.spo2 = healthData.bloodOxygen.spo2;
+      record.temperature = healthData.temperature.value;
+
+      await HealthDataService.saveSportsData(record);
       console.info('数据同步到数据库成功');
     } catch (error) {
       console.error(`数据同步到数据库失败: ${JSON.stringify(error)}`);
     }
   }
 
-  setUseMockData(useMock: boolean): void {
-    this.useMockData = useMock;
+  // 新增接口 - 保存运动数据（用于数据编辑）
+  static async saveSportsData(date: string, steps: number, calories: number, distance: number): Promise<void> {
+    const userId: number = HealthDataService.getCurrentUserId();
+    const record = new HealthRecord();
+    record.initialize(date, userId);
+    record.stepsCurrent = steps;
+    record.caloriesCurrent = calories;
+    record.stepsDistance = distance;
+
+    await HealthDataService.saveSportsData(record);
   }
 
-  private async requestTodaySportsFromApi(): Promise<TodaySportsData> {
-    const httpRequest: http.HttpRequest = http.createHttp();
-    const result: TodaySportsData = new TodaySportsData();
+  // 新增接口 - 保存健康数据（用于数据编辑）
+  static async saveHealthData(date: string, sleepDeep: number, sleepLight: number, stressValue: number,
+    heartRate: number, bpSystolic: number, bpDiastolic: number, spo2: number, temperature: number): Promise<void> {
+    const userId: number = HealthDataService.getCurrentUserId();
+    const record = new HealthRecord();
+    record.initialize(date, userId);
+    record.sleepDeep = sleepDeep;
+    record.sleepLight = sleepLight;
+    record.sleepTotal = sleepDeep + sleepLight;
+    record.stressValue = stressValue;
+    record.heartRate = heartRate;
+    record.bpSystolic = bpSystolic;
+    record.bpDiastolic = bpDiastolic;
+    record.spo2 = spo2;
+    record.temperature = temperature;
 
-    try {
-      const response: http.HttpResponse = await httpRequest.request(
-        `${this.baseUrl}/health/sports/today`,
-        {
-          method: http.RequestMethod.GET,
-          header: { 'Content-Type': 'application/json' }
-        }
-      );
-
-      if (response.responseCode === 200) {
-        const responseObj: Record<string, Object> = JSON.parse(response.result as string);
-        const sportsData = responseObj.data as TodaySportsData;
-
-        if (sportsData && sportsData.steps && sportsData.calories) {
-          result.steps.current = sportsData.steps.current;
-          result.steps.goal = sportsData.steps.goal;
-          result.steps.distance = sportsData.steps.distance;
-          result.calories.current = sportsData.calories.current;
-          result.calories.goal = sportsData.calories.goal;
-        }
-      }
-    } catch (error) {
-      console.error(`获取今日运动数据失败: ${JSON.stringify(error)}`);
-    } finally {
-      httpRequest.destroy();
-    }
-
-    return result;
+    await HealthDataService.saveHealthData(record);
   }
 
-  private async requestHealthDataFromApi(): Promise<HealthData> {
-    const httpRequest: http.HttpRequest = http.createHttp();
-    const result: HealthData = new HealthData();
-
-    try {
-      const response: http.HttpResponse = await httpRequest.request(
-        `${this.baseUrl}/health/data`,
-        {
-          method: http.RequestMethod.GET,
-          header: { 'Content-Type': 'application/json' }
-        }
-      );
-
-      if (response.responseCode === 200) {
-        const responseObj: Record<string, Object> = JSON.parse(response.result as string);
-        const healthData = responseObj.data as HealthData;
-
-        if (healthData && healthData.sleep) {
-          result.sleep.deepSleep = healthData.sleep.deepSleep;
-          result.sleep.date = healthData.sleep.date;
-          result.stress.value = healthData.stress.value;
-          result.stress.date = healthData.stress.date;
-          result.heart.heartRate = healthData.heart.heartRate;
-          result.heart.date = healthData.heart.date;
-          result.bloodPressure.systolic = healthData.bloodPressure.systolic;
-          result.bloodPressure.diastolic = healthData.bloodPressure.diastolic;
-          result.bloodOxygen.spo2 = healthData.bloodOxygen.spo2;
-          result.temperature.value = healthData.temperature.value;
-          result.temperature.date = healthData.temperature.date;
-        }
-      }
-    } catch (error) {
-      console.error(`获取健康数据失败: ${JSON.stringify(error)}`);
-    } finally {
-      httpRequest.destroy();
-    }
-
-    return result;
+  // 新增接口 - 根据日期获取健康数据
+  static async getHealthDataByDate(date: string): Promise<HealthRecord | null> {
+    return await HealthDataService.getHealthDataByDate(date);
   }
+
+  // 新增接口 - 获取日期范围内的健康数据
+  static async getHealthDataByDateRange(startDate: string, endDate: string): Promise<HealthRecord[]> {
+    return await HealthDataService.getHealthDataByDateRange(startDate, endDate);
+  }
+
+  // 新增接口 - 删除健康数据
+  static async deleteHealthData(date: string): Promise<void> {
+    await HealthDataService.deleteHealthData(date);
+  }
+
+  // 新增接口 - 批量保存健康数据
+  static async batchSaveHealthData(records: HealthRecord[]): Promise<void> {
+    await HealthDataService.batchSaveHealthData(records);
+  }
+
+  // 新增接口 - 获取AI健康建议
+  static async getAIAdvice(): Promise<AIAdviceResponse> {
+    return await HealthDataService.getAIAdvice();
+  }
+
+  // 新增接口 - 设置当前登录用户ID
+  static async setCurrentUserId(userId: number): Promise<void> {
+    await HealthDataService.setCurrentUserId(userId);
+  }
+
+  // 新增接口 - 获取当前登录用户ID
+  static getCurrentUserId(): number {
+    return HealthDataService.getCurrentUserId();
+  }
+
+  // 新增接口 - 更新当前登录用户ID（用于切换用户）
+  static async updateCurrentUserId(userId: number): Promise<void> {
+    await HealthDataService.updateCurrentUserId(userId);
+  }
+
+  // 新增接口 - 清空当前用户所有健康数据（用于测试）
+  static async clearAllData(): Promise<void> {
+    await HealthDataService.clearAllData();
+  }
+
+
 }

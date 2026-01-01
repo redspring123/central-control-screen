@@ -7,6 +7,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "health": "file:../../features/health",
-    "medical": "file:../../features/medical"
+    "medical": "file:../../features/medical",
+    "auth": "file:../../features/auth",
+    "utils": "file:../../commons/utils"
   }
 }

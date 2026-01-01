@@ -12,11 +12,6 @@
     "deliveryWithInstall": true,
     "installationFree": false,
     "pages": "$profile:main_pages",
-    "requestPermissions": [
-      {
-        "name": "ohos.permission.INTERNET" // ✅ 加在这里
-      }
-    ],
     "abilities": [
       {
         "name": "EntryAbility",

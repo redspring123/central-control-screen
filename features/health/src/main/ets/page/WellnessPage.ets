@@ -4,6 +4,8 @@ import  {MenuItem} from '../model/btn'// 定义菜单接口
 import { common, ConfigurationConstant } from '@kit.AbilityKit';
 import { HealthData } from '../model/SportsDataModel';
 import { HealthSportsViewModel } from '../viewmodel/HealthSportsViewModel';
+import { HealthDataService } from '../database/HealthDataService';
+import { UserRepo, UserProfile, UserInfo } from 'auth';
 
 @Entry({ routeName: 'HealthWellnessPage' })
 @Component
@@ -12,19 +14,65 @@ export struct WellnessPage {
   @State isDarkMode: boolean = false;
   @State healthData: HealthData = new HealthData();
   private viewModel: HealthSportsViewModel = new HealthSportsViewModel();
+  
+  // 用户信息状态
+  @State userName: string = '请登录';
+  @State userPhone: string = '';
+  @State userAge: number = 0;
+  @State userGender: string = '未知';
 
   aboutToAppear() {
     // 同步系统当前的深浅模式状态
     let colorMode = this.context.config.colorMode;
     this.isDarkMode = (colorMode === ConfigurationConstant.ColorMode.COLOR_MODE_DARK);
+    this.loadUserProfile();
+  }
+
+  onPageShow() {
     this.loadHealthData();
+  }
+
+  async loadUserProfile() {
+    const currentUser = AppStorage.get<UserInfo>('currentUser');
+    if (currentUser) {
+      this.userName = currentUser.name;
+      try {
+        // 获取完整画像以显示手机号
+        const profile = await UserRepo.getUserProfile(currentUser.id);
+        if (profile) {
+          this.userName = profile.name || currentUser.name;
+          this.userPhone = profile.phone || '';
+          this.userAge = profile.age || 0;
+          this.userGender = profile.gender || '未知';
+        }
+      } catch (e) {
+        console.error('加载用户画像失败:', JSON.stringify(e as object));
+      }
+    }
   }
 
   async loadHealthData() {
     try {
-      this.healthData = await this.viewModel.getHealthData();
+      // 1. 确保数据库已初始化 (双重保险)
+      await HealthDataService.init(this.context);
+      
+      // 2. 获取数据
+      let data = await this.viewModel.getHealthData();
+      
+      // 3. 检查数据是否全为0 (如果是，说明可能是新用户，尝试自动生成一次数据)
+      if (data.heart.heartRate === 0 && data.bloodOxygen.spo2 === 0) {
+        console.info('WellnessPage: 检测到健康数据为空，尝试自动生成初始数据...');
+        await HealthDataService.simulateData();
+        // 重新获取
+        data = await this.viewModel.getHealthData();
+      }
+      
+      this.healthData = data;
+      console.info('WellnessPage: 数据加载完成', JSON.stringify(this.healthData));
+
     } catch (error) {
-      console.error(`加载健康数据失败: ${JSON.stringify(error)}`);
+      console.error(`加载健康数据失败: ${JSON.stringify(error as object)}`);
+      // 如果出错，这里可以给 healthData 赋一个默认的模拟值，或者弹窗提示
     }
   }
 
@@ -69,7 +117,7 @@ export struct WellnessPage {
             Image($r('app.media.icon_user_small')) // [需补充图片] 小人图标
               .width(16).height(16)
               .objectFit(ImageFit.Contain)
-            Text("高子航")
+            Text(this.userName)
               .fontSize(18)
               .fontColor(Color.White)
               .fontWeight(FontWeight.Bold)
@@ -80,7 +128,7 @@ export struct WellnessPage {
             Image($r('app.media.icon_phone_small')) // [需补充图片] 手机图标
               .width(16).height(16)
               .objectFit(ImageFit.Contain)
-            Text("17722827718")
+            Text(this.userPhone)
               .fontSize(16)
               .fontColor(Color.White)
           }
@@ -113,10 +161,10 @@ export struct WellnessPage {
               .margin({ right: 20 })
 
             Column({ space: 5 }) {
-              Text("高子航").fontSize(22).fontColor(Color.White).fontWeight(FontWeight.Bold)
+              Text(this.userName).fontSize(22).fontColor(Color.White).fontWeight(FontWeight.Bold)
               Row({ space: 10 }) {
-                Text("男").fontSize(14).fontColor(Color.White)
-                Text("28岁").fontSize(14).fontColor(Color.White)
+                Text(this.userGender).fontSize(14).fontColor(Color.White)
+                Text(`${this.userAge}岁`).fontSize(14).fontColor(Color.White)
               }
             }.alignItems(HorizontalAlign.Start)
 
@@ -283,7 +331,8 @@ export struct WellnessPage {
   // --- 气泡构建函数 ---
   @Builder HealthBubble(value: string, label: string, x: number, y: number) {
     Column() {
-      Text(value)
+      // 增加判空显示，如果为0或空则显示 --
+      Text((value === '0' || value === '0°C' || value === '0%' || value === '0/0') ? '--' : value)
         .fontSize(20)
         .fontColor($r('app.color.text_cyan'))
         .fontWeight(FontWeight.Bold)
