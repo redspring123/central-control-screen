@@ -31,6 +31,8 @@ export class HealthSportsViewModel {
 
     if (record) {
       result.sleep.deepSleep = record.sleepDeep;
+      result.sleep.lightSleep = record.sleepLight;
+      result.sleep.totalSleep = record.sleepTotal;
       result.sleep.date = record.date;
       result.stress.value = record.stressValue;
       result.stress.date = record.date;

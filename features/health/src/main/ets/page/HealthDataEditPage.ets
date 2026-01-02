@@ -23,6 +23,7 @@ export struct HealthDataEditPage {
   @State bpDiastolic: string = '';
   @State spo2: string = '';
   @State temperature: string = '';
+  @State refreshKey: number = 0; // 用于强制刷新UI
 
   // === 生命周期 ===
   async aboutToAppear() {
@@ -43,6 +44,35 @@ export struct HealthDataEditPage {
       if (record) {
         this.isDataExist = true; // 标记为已存在 (修改模式)
 
+        // 打印查询到的数据用于调试
+        console.info('HealthDataEditPage: 查询到的原始数据', JSON.stringify({
+          stepsCurrent: record.stepsCurrent,
+          caloriesCurrent: record.caloriesCurrent,
+          stepsDistance: record.stepsDistance,
+          sleepDeep: record.sleepDeep,
+          sleepLight: record.sleepLight,
+          sleepTotal: record.sleepTotal,
+          heartRate: record.heartRate,
+          stressValue: record.stressValue,
+          bpSystolic: record.bpSystolic,
+          bpDiastolic: record.bpDiastolic,
+          spo2: record.spo2,
+          temperature: record.temperature
+        }));
+
+        // 先清空所有字段，再设置新值，触发UI刷新
+        this.steps = '';
+        this.calories = '';
+        this.distance = '';
+        this.deepSleep = '';
+        this.lightSleep = '';
+        this.heartRate = '';
+        this.stress = '';
+        this.bpSystolic = '';
+        this.bpDiastolic = '';
+        this.spo2 = '';
+        this.temperature = '';
+
         // 回显数据到表单
         this.steps = record.stepsCurrent > 0 ? record.stepsCurrent.toString() : '';
         this.calories = record.caloriesCurrent > 0 ? record.caloriesCurrent.toString() : '';
@@ -57,6 +87,24 @@ export struct HealthDataEditPage {
         this.bpDiastolic = record.bpDiastolic > 0 ? record.bpDiastolic.toString() : '';
         this.spo2 = record.spo2 > 0 ? record.spo2.toString() : '';
         this.temperature = record.temperature > 0 ? record.temperature.toString() : '';
+
+        // 打印设置后的表单值用于调试
+        console.info('HealthDataEditPage: 设置后的表单值', JSON.stringify({
+          steps: this.steps,
+          calories: this.calories,
+          distance: this.distance,
+          deepSleep: this.deepSleep,
+          lightSleep: this.lightSleep,
+          heartRate: this.heartRate,
+          stress: this.stress,
+          bpSystolic: this.bpSystolic,
+          bpDiastolic: this.bpDiastolic,
+          spo2: this.spo2,
+          temperature: this.temperature
+        }));
+
+        // 强制刷新UI
+        this.refreshKey++;
 
         promptAction.showToast({ message: `查询成功: 已加载 ${date} 数据` });
       } else {
@@ -219,23 +267,128 @@ export struct HealthDataEditPage {
           // --- 数据录入区域 (Add/Modify) ---
           this.FormItemTitle('运动数据')
           Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceBetween }) {
-            this.InputBox('步数', '8000', this.steps, (v) => this.steps = v)
-            this.InputBox('热量(kcal)', '500', this.calories, (v) => this.calories = v)
-            this.InputBox('距离(km)', '5.2', this.distance, (v) => this.distance = v)
+            Column() {
+              Text('步数').fontSize(12).fontColor(Color.Gray).margin({ bottom: 4 }).width('100%')
+              TextInput({ placeholder: '8000', text: this.steps })
+                .type(InputType.NUMBER_DECIMAL)
+                .width('100%')
+                .height(45)
+                .backgroundColor('#F5F7FA')
+                .borderRadius(8)
+                .onChange((v) => this.steps = v)
+            }
+            .width('48%')
+            .margin({ bottom: 12 })
+
+            Column() {
+              Text('热量(kcal)').fontSize(12).fontColor(Color.Gray).margin({ bottom: 4 }).width('100%')
+              TextInput({ placeholder: '500', text: this.calories })
+                .type(InputType.NUMBER_DECIMAL)
+                .width('100%')
+                .height(45)
+                .backgroundColor('#F5F7FA')
+                .borderRadius(8)
+                .onChange((v) => this.calories = v)
+            }
+            .width('48%')
+            .margin({ bottom: 12 })
+
+            Column() {
+              Text('距离(km)').fontSize(12).fontColor(Color.Gray).margin({ bottom: 4 }).width('100%')
+              TextInput({ placeholder: '5.2', text: this.distance })
+                .type(InputType.NUMBER_DECIMAL)
+                .width('100%')
+                .height(45)
+                .backgroundColor('#F5F7FA')
+                .borderRadius(8)
+                .onChange((v) => this.distance = v)
+            }
+            .width('48%')
+            .margin({ bottom: 12 })
           }
 
           this.FormItemTitle('睡眠数据 (小时)')
           Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceBetween }) {
-            this.InputBox('深睡', '2.5', this.deepSleep, (v) => this.deepSleep = v)
-            this.InputBox('浅睡', '5.0', this.lightSleep, (v) => this.lightSleep = v)
+            Column() {
+              Text('深睡').fontSize(12).fontColor(Color.Gray).margin({ bottom: 4 }).width('100%')
+              TextInput({ placeholder: '2.5', text: this.deepSleep })
+                .type(InputType.NUMBER_DECIMAL)
+                .width('100%')
+                .height(45)
+                .backgroundColor('#F5F7FA')
+                .borderRadius(8)
+                .onChange((v) => this.deepSleep = v)
+            }
+            .width('48%')
+            .margin({ bottom: 12 })
+
+            Column() {
+              Text('浅睡').fontSize(12).fontColor(Color.Gray).margin({ bottom: 4 }).width('100%')
+              TextInput({ placeholder: '5.0', text: this.lightSleep })
+                .type(InputType.NUMBER_DECIMAL)
+                .width('100%')
+                .height(45)
+                .backgroundColor('#F5F7FA')
+                .borderRadius(8)
+                .onChange((v) => this.lightSleep = v)
+            }
+            .width('48%')
+            .margin({ bottom: 12 })
           }
 
           this.FormItemTitle('身体指标')
           Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceBetween }) {
-            this.InputBox('心率(bpm)', '75', this.heartRate, (v) => this.heartRate = v)
-            this.InputBox('血氧(%)', '98', this.spo2, (v) => this.spo2 = v)
-            this.InputBox('体温(°C)', '36.5', this.temperature, (v) => this.temperature = v)
-            this.InputBox('压力值(0-99)', '40', this.stress, (v) => this.stress = v)
+            Column() {
+              Text('心率(bpm)').fontSize(12).fontColor(Color.Gray).margin({ bottom: 4 }).width('100%')
+              TextInput({ placeholder: '75', text: this.heartRate })
+                .type(InputType.NUMBER_DECIMAL)
+                .width('100%')
+                .height(45)
+                .backgroundColor('#F5F7FA')
+                .borderRadius(8)
+                .onChange((v) => this.heartRate = v)
+            }
+            .width('48%')
+            .margin({ bottom: 12 })
+
+            Column() {
+              Text('血氧(%)').fontSize(12).fontColor(Color.Gray).margin({ bottom: 4 }).width('100%')
+              TextInput({ placeholder: '98', text: this.spo2 })
+                .type(InputType.NUMBER_DECIMAL)
+                .width('100%')
+                .height(45)
+                .backgroundColor('#F5F7FA')
+                .borderRadius(8)
+                .onChange((v) => this.spo2 = v)
+            }
+            .width('48%')
+            .margin({ bottom: 12 })
+
+            Column() {
+              Text('体温(°C)').fontSize(12).fontColor(Color.Gray).margin({ bottom: 4 }).width('100%')
+              TextInput({ placeholder: '36.5', text: this.temperature })
+                .type(InputType.NUMBER_DECIMAL)
+                .width('100%')
+                .height(45)
+                .backgroundColor('#F5F7FA')
+                .borderRadius(8)
+                .onChange((v) => this.temperature = v)
+            }
+            .width('48%')
+            .margin({ bottom: 12 })
+
+            Column() {
+              Text('压力值(0-99)').fontSize(12).fontColor(Color.Gray).margin({ bottom: 4 }).width('100%')
+              TextInput({ placeholder: '40', text: this.stress })
+                .type(InputType.NUMBER_DECIMAL)
+                .width('100%')
+                .height(45)
+                .backgroundColor('#F5F7FA')
+                .borderRadius(8)
+                .onChange((v) => this.stress = v)
+            }
+            .width('48%')
+            .margin({ bottom: 12 })
           }
 
           this.FormItemTitle('血压 (mmHg)')
@@ -314,6 +467,7 @@ export struct HealthDataEditPage {
         .fontColor($r('app.color.text_white'))
         .borderRadius(8)
         .onChange(onChange)
+        .key(label + value) // 添加key以强制刷新
     }
     .width('48%')
     .margin({ bottom: 12 })
