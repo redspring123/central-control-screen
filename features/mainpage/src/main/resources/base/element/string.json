@@ -44,6 +44,9 @@
 
     { "name": "module_desc", "value": "中央控制屏模块" },
     { "name": "EntryAbility_desc", "value": "主界面入口" },
-    { "name": "EntryAbility_label", "value": "我家控制屏" }
+    { "name": "EntryAbility_label", "value": "我家控制屏" },
+
+    { "name": "forum_title", "value": "健康论坛" }
+
   ]
 }

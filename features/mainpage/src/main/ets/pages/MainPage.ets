@@ -9,7 +9,7 @@ import 'medical/src/main/ets/pages/CallPage';
 import 'health/src/main/ets/page/WellnessPage';
 import 'health/src/main/ets/page/HealthAssistantPage';
 import 'auth/src/main/ets/pages/ProfilePage';
-
+import 'forum/src/main/ets/pages/ForumPage';
 import { common, ConfigurationConstant } from '@kit.AbilityKit';
 
 // 1. 定义卡片库的元数据（用于在添加列表中显示）
@@ -26,6 +26,7 @@ const CARD_LIBRARY: CardMeta[] = [
   { key: 'health', name: '居家康养' },
   { key: 'consult', name: '在线问诊' },
   { key: 'intercom', name: '可视对讲' },
+  { key: 'forum', name: '健康论坛' },
   { key: 'music', name: '背景音乐' }, // 新增示例
   { key: 'robot', name: '扫地机器人' }, // 新增示例
   { key: 'curtain', name: '智能窗帘' }, // 新增示例
@@ -135,7 +136,19 @@ export struct MainPage {
     } else if (key === 'health') {
       // 使用百分比 '50%' 代替固定尺寸 '100fp'
       this.InfoCardBuilder($r('app.string.card_health_title'), $r('app.string.card_health_sleep'), '睡眠优', $r('app.media.sleep_quality'), '50%', true, 'card_health')
-    } else {
+    }
+    // 🆕 新增：健康论坛卡片
+    else if (key === 'forum') {
+      this.InfoCardBuilder(
+        $r('app.string.forum_title'),                  // 标题
+        '今日热帖: 12',              // 副标题 (可以绑定动态变量)
+        '去交流',                    // 状态/操作文字
+        $r('app.media.ic_public_message'), // 🆕 请确保你有这个图标，或者使用 $r('app.media.ic_forum')
+        '45%',                       // 图标大小
+        true,                        // 可点击
+        'HealthForumPage'            // 🚀 跳转路由名称 (需与 ForumPage 的 @Entry routeName 一致)
+      )
+    }else {
       // 默认/其他未实现的卡片占位
       this.PlaceholderCard(key)
     }
