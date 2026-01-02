@@ -206,6 +206,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return null;
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
       predicates.orderByDesc('date');
@@ -231,6 +235,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return null;
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
       predicates.orderByDesc('date');
@@ -256,6 +264,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return;
+      }
 
       // 确保数据绑定到当前登录用户
       data.userId = HealthDataService.currentUserId;
@@ -300,6 +312,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return null;
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
       predicates.equalTo('date', date);
@@ -324,6 +340,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return [];
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
       predicates.between('date', startDate, endDate);
@@ -349,6 +369,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return;
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
       predicates.equalTo('date', date);
@@ -367,6 +391,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return;
+      }
 
       store.beginTransaction();
 
@@ -391,10 +419,13 @@ export class HealthDataService {
       console.info(`HealthDataService: 用户${HealthDataService.currentUserId}批量保存健康数据成功，共${records.length}条记录`);
     } catch (error) {
       const store = AppDatabase.getStore();
-      await store.rollback(0);
+      if (store) {
+        await store.rollback(0);
+      }
       console.error('HealthDataService: 批量保存健康数据失败', error);
       throw new Error(`批量保存健康数据失败: ${JSON.stringify(error)}`);
     }
+
   }
 
   // 新增接口 - 获取AI健康建议
@@ -822,6 +853,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return;
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
 

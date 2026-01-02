@@ -113,23 +113,25 @@ export struct HealthAssistantPage {
 
     // 3. 家庭环境与网络 (直接查询数据库)
     try {
-      const store: relationalStore.RdbStore = AppDatabase.getStore();
-      const predicates = new relationalStore.RdbPredicates('house_metrics');
-      predicates.orderByDesc('ts');
-      predicates.limitAs(1);
-      
-      const resultSet: relationalStore.ResultSet = await store.query(predicates);
-      if (resultSet.goToFirstRow()) {
-        const energy: number = resultSet.getDouble(resultSet.getColumnIndex('energy_kwh'));
-        const co2: number = resultSet.getDouble(resultSet.getColumnIndex('co2_ppm'));
-        const down: number = resultSet.getDouble(resultSet.getColumnIndex('net_down_mbps'));
+      const store = AppDatabase.getStore();
+      if (store) {
+        const predicates = new relationalStore.RdbPredicates('house_metrics');
+        predicates.orderByDesc('ts');
+        predicates.limitAs(1);
         
-        context += `[家庭环境]
-        今日能耗：${energy.toFixed(1)} kWh
-        CO2浓度：${co2.toFixed(0)} ppm
-        网络下载速度：${down.toFixed(0)} Mbps\n`;
+        const resultSet: relationalStore.ResultSet = await store.query(predicates);
+        if (resultSet.goToFirstRow()) {
+          const energy: number = resultSet.getDouble(resultSet.getColumnIndex('energy_kwh'));
+          const co2: number = resultSet.getDouble(resultSet.getColumnIndex('co2_ppm'));
+          const down: number = resultSet.getDouble(resultSet.getColumnIndex('net_down_mbps'));
+          
+          context += `[家庭环境]
+          今日能耗：${energy.toFixed(1)} kWh
+          CO2浓度：${co2.toFixed(0)} ppm
+          网络下载速度：${down.toFixed(0)} Mbps\n`;
+        }
+        resultSet.close();
       }
-      resultSet.close();
     } catch (e) {
       console.warn('获取环境数据失败', JSON.stringify(e));
     }

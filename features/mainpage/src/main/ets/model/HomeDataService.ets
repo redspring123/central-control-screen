@@ -27,24 +27,26 @@ export class HomeDataService {
    */
   static async getEnergyData(): Promise<EnergyData> {
     try {
-      const store: relationalStore.RdbStore = AppDatabase.getStore();
-      const predicates = new relationalStore.RdbPredicates('house_metrics');
-      predicates.orderByDesc('ts');
-      predicates.limitAs(1); // SQL: SELECT * FROM house_metrics ORDER BY ts DESC LIMIT 1
-      
-      const resultSet: relationalStore.ResultSet = await store.query(predicates);
-      if (resultSet.goToFirstRow()) {
-        const energy = resultSet.getDouble(resultSet.getColumnIndex('energy_kwh'));
-        const co2 = resultSet.getDouble(resultSet.getColumnIndex('co2_ppm'));
-        resultSet.close();
+      const store = AppDatabase.getStore();
+      if (store) {
+        const predicates = new relationalStore.RdbPredicates('house_metrics');
+        predicates.orderByDesc('ts');
+        predicates.limitAs(1); // SQL: SELECT * FROM house_metrics ORDER BY ts DESC LIMIT 1
         
-        return {
-          power: parseFloat((Math.random() * 2 + 0.5).toFixed(2)), // 实时功率暂模拟
-          todayUsage: parseFloat(energy.toFixed(1)),
-          carbon: parseFloat((co2 / 1000).toFixed(2))
-        };
+        const resultSet: relationalStore.ResultSet = await store.query(predicates);
+        if (resultSet.goToFirstRow()) {
+          const energy = resultSet.getDouble(resultSet.getColumnIndex('energy_kwh'));
+          const co2 = resultSet.getDouble(resultSet.getColumnIndex('co2_ppm'));
+          resultSet.close();
+          
+          return {
+            power: parseFloat((Math.random() * 2 + 0.5).toFixed(2)), // 实时功率暂模拟
+            todayUsage: parseFloat(energy.toFixed(1)),
+            carbon: parseFloat((co2 / 1000).toFixed(2))
+          };
+        }
+        resultSet.close();
       }
-      resultSet.close();
     } catch (e) {
       console.warn('HomeDataService: 读取数据库失败，使用随机数据', e);
     }
@@ -62,23 +64,25 @@ export class HomeDataService {
   static async getNetworkData(): Promise<NetworkData> {
     try {
       const store = AppDatabase.getStore();
-      const predicates = new relationalStore.RdbPredicates('house_metrics');
-      predicates.orderByDesc('ts');
-      predicates.limitAs(1);
-      
-      const resultSet = await store.query(predicates);
-      if (resultSet.goToFirstRow()) {
-        const down = resultSet.getDouble(resultSet.getColumnIndex('net_down_mbps'));
-        const up = resultSet.getDouble(resultSet.getColumnIndex('net_up_mbps'));
-        resultSet.close();
+      if (store) {
+        const predicates = new relationalStore.RdbPredicates('house_metrics');
+        predicates.orderByDesc('ts');
+        predicates.limitAs(1);
         
-        return {
-          downloadSpeed: `${down.toFixed(0)} Mbps`,
-          uploadSpeed: `${up.toFixed(0)} Mbps`,
-          quality: down > 300 ? '优' : '良'
-        };
+        const resultSet = await store.query(predicates);
+        if (resultSet.goToFirstRow()) {
+          const down = resultSet.getDouble(resultSet.getColumnIndex('net_down_mbps'));
+          const up = resultSet.getDouble(resultSet.getColumnIndex('net_up_mbps'));
+          resultSet.close();
+          
+          return {
+            downloadSpeed: `${down.toFixed(0)} Mbps`,
+            uploadSpeed: `${up.toFixed(0)} Mbps`,
+            quality: down > 300 ? '优' : '良'
+          };
+        }
+        resultSet.close();
       }
-      resultSet.close();
     } catch (e) {
       console.warn('HomeDataService: 读取网络数据失败', e);
     }
@@ -98,7 +102,8 @@ export class HomeDataService {
    */
   static async simulateData(): Promise<void> {
     try {
-      const store: relationalStore.RdbStore = AppDatabase.getStore();
+      const store = AppDatabase.getStore();
+      if (!store) return;
       
       // 读取上一条数据作为基准
       const lastEnergy = await HomeDataService.getEnergyData();
