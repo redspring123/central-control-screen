@@ -3,6 +3,7 @@
     { "name": "bg_page", "value": "#000000" },
     { "name": "bg_card", "value": "#1C1C1E" },
     { "name": "text_primary", "value": "#FFFFFF" },
+    { "name": "text_secondary", "value": "#999999" },
     { "name": "bg_page_dark", "value": "#000000" },
     { "name": "card_gradient_start", "value": "#4facfe" },
     { "name": "card_gradient_end", "value": "#00f2fe" },

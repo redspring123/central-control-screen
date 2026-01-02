@@ -85,14 +85,14 @@ export struct OnlineConsultPage {
       Row() {
         Image($r('app.media.icon_back'))
           .width(24).height(24)
-          .fillColor(Color.White)
+          .fillColor($r('app.color.text_primary'))
           .onClick(() => {
             router.back();
           })
 
         Text('问诊医生')
           .fontSize(18)
-          .fontColor(Color.White)
+          .fontColor($r('app.color.text_primary'))
           .fontWeight(FontWeight.Bold)
 
         if (this.isAdmin) {
@@ -106,7 +106,7 @@ export struct OnlineConsultPage {
               })
             Text('添加')
               .fontSize(16)
-              .fontColor(Color.White)
+              .fontColor($r('app.color.text_primary'))
               .onClick(() => {
                  router.pushNamedRoute({ name: 'DoctorEditPage' });
               })
@@ -125,8 +125,8 @@ export struct OnlineConsultPage {
         TextInput({ placeholder: '请输入医生姓名查找', text: this.searchName })
           .width('100%')
           .height(40)
-          .placeholderColor('#888888')
-          .fontColor(Color.White)
+          .placeholderColor($r('app.color.text_secondary'))
+          .fontColor($r('app.color.text_primary'))
           .backgroundColor($r('app.color.input_bg'))
           .borderRadius(8)
           .onChange((value: string) => {
@@ -139,8 +139,8 @@ export struct OnlineConsultPage {
           TextInput({ placeholder: '筛选医院', text: this.searchHospital })
             .layoutWeight(1)
             .height(40)
-            .placeholderColor('#888888')
-            .fontColor(Color.White)
+            .placeholderColor($r('app.color.text_secondary'))
+            .fontColor($r('app.color.text_primary'))
             .backgroundColor($r('app.color.input_bg'))
             .borderRadius(8)
             .onChange((value: string) => {
@@ -151,8 +151,8 @@ export struct OnlineConsultPage {
           TextInput({ placeholder: '筛选科室', text: this.searchDepartment })
             .layoutWeight(1)
             .height(40)
-            .placeholderColor('#888888')
-            .fontColor(Color.White)
+            .placeholderColor($r('app.color.text_secondary'))
+            .fontColor($r('app.color.text_primary'))
             .backgroundColor($r('app.color.input_bg'))
             .borderRadius(8)
             .onChange((value: string) => {
@@ -255,7 +255,7 @@ export struct OnlineConsultPage {
               if (this.isAdmin) {
                 Text('管理')
                   .fontSize(12)
-                  .fontColor(Color.White)
+                  .fontColor($r('app.color.text_primary'))
                   .padding({ left: 8, right: 8, top: 4, bottom: 4 })
                   .backgroundColor('#40000000')
                   .borderRadius(4)
@@ -274,6 +274,6 @@ export struct OnlineConsultPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor($r('app.color.bg_page_dark'))
+    .backgroundColor($r('app.color.bg_page'))
   }
 }

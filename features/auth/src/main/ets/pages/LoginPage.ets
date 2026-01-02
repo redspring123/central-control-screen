@@ -83,26 +83,26 @@ export struct LoginPage {
 
         // --- Logo / 标题区域 ---
         Column({ space: 10 }) {
-          // [Logo] 如果有图标资源，请解开下面 Image 的注释，并注释掉 Text 占位符
-          // Image($r('app.media.app_icon'))
-          //   .width(80)
-          //   .height(80)
-          //   .borderRadius(20)
-          //   .shadow({ radius: 10, color: 'rgba(0,0,0,0.1)', offsetY: 5 })
-          //   .margin({ bottom: 10 })
-
-          // [占位 Logo]
-          Text("Logo")
-            .fontSize(20)
-            .fontColor('#007DFF')
-            .fontWeight(FontWeight.Bold)
+          // [Logo]
+          Image($r('app.media.app_icon'))
             .width(80)
             .height(80)
             .borderRadius(20)
-            .backgroundColor('rgba(255,255,255,0.8)')
-            .textAlign(TextAlign.Center)
             .shadow({ radius: 10, color: 'rgba(0,0,0,0.1)', offsetY: 5 })
             .margin({ bottom: 10 })
+
+          // [占位 Logo]
+          // Text("Logo")
+          //   .fontSize(20)
+          //   .fontColor('#007DFF')
+          //   .fontWeight(FontWeight.Bold)
+          //   .width(80)
+          //   .height(80)
+          //   .borderRadius(20)
+          //   .backgroundColor('rgba(255,255,255,0.8)')
+          //   .textAlign(TextAlign.Center)
+          //   .shadow({ radius: 10, color: 'rgba(0,0,0,0.1)', offsetY: 5 })
+          //   .margin({ bottom: 10 })
 
           // 主标题
           Text(this.isRegister ? '创建新账户' : '欢迎回来')
