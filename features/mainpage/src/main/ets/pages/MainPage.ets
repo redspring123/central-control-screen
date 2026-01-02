@@ -143,7 +143,7 @@ export struct MainPage {
         $r('app.string.forum_title'),                  // 标题
         '今日热帖: 12',              // 副标题 (可以绑定动态变量)
         '去交流',                    // 状态/操作文字
-        $r('app.media.ic_public_message'), // 🆕 请确保你有这个图标，或者使用 $r('app.media.ic_forum')
+        $r('app.media.preach'), // 🆕 请确保你有这个图标，或者使用 $r('app.media.ic_forum')
         '45%',                       // 图标大小
         true,                        // 可点击
         'HealthForumPage'            // 🚀 跳转路由名称 (需与 ForumPage 的 @Entry routeName 一致)
@@ -163,8 +163,8 @@ export struct MainPage {
     Column({ space: 5 }) {
       Text($r('app.string.card_energy_title')).fontSize($r('app.float.font_size_large')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_white'))
       Text(`${this.energyData.todayUsage} kWh`).fontSize($r('app.float.font_size_xlarge')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_white'))
-      Text($r('app.string.card_energy_today')).fontSize($r('app.float.font_size_small')).fontColor($r('app.color.text_gray'))
-      Text(`本月碳排: ${this.energyData.carbon} kg`).fontSize($r('app.float.font_size_small')).fontColor($r('app.color.text_gray'))
+      Text($r('app.string.card_energy_today')).fontSize($r('app.float.font_size_small')).fontColor($r('app.color.text_white'))
+      Text(`本月碳排: ${this.energyData.carbon} kg`).fontSize($r('app.float.font_size_small')).fontColor($r('app.color.text_white'))
     }
     .width('100%').height('100%')
     .alignItems(HorizontalAlign.Center).justifyContent(FlexAlign.Center) // 改为居中
@@ -190,8 +190,8 @@ export struct MainPage {
       Column() {
         Text($r('app.string.card_network_title')).fontSize($r('app.float.font_size_large')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_white'))
         Text(this.networkData.quality).fontSize($r('app.float.font_size_large')).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_white'))
-        Text(`↑ ${this.networkData.uploadSpeed}`).fontSize(12).fontColor($r('app.color.text_gray'))
-        Text(`↓ ${this.networkData.downloadSpeed}`).fontSize(12).fontColor($r('app.color.text_gray'))
+        Text(`↑ ${this.networkData.uploadSpeed}`).fontSize(12).fontColor($r('app.color.text_white'))
+        Text(`↓ ${this.networkData.downloadSpeed}`).fontSize(12).fontColor($r('app.color.text_white'))
       }.alignItems(HorizontalAlign.Start) // 网络卡片保持左对齐可能更好看，或者也改居中？这里先保持左对齐，配合右侧大图标
       Blank()
       Image($r('app.media.network_speed')).width(48).height(48).fillColor('#ff379ee0') // 增大图标
@@ -220,7 +220,7 @@ export struct MainPage {
       Column() {
         Text(title).fontSize($r('app.float.font_size_large')).fontColor($r('app.color.text_white')).fontWeight(FontWeight.Bold)
         Text(valueText).fontSize($r('app.float.font_size_large')).fontColor($r('app.color.text_white')).fontWeight(FontWeight.Bold).margin({ top: 5, bottom: 2 })
-        if (subText) Text(subText).fontSize($r('app.float.font_size_small')).fontColor($r('app.color.text_gray'))
+        if (subText) Text(subText).fontSize($r('app.float.font_size_small')).fontColor($r('app.color.text_white'))
       }.layoutWeight(1).height('100%').alignItems(HorizontalAlign.Start).justifyContent(FlexAlign.Center)
       if (bgIcon) {
         // 优先使用传入的尺寸，否则默认 48

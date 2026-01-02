@@ -83,12 +83,10 @@ export struct OnlineConsultPage {
     Column() {
       // ================= 顶部标题栏 =================
       Row() {
-        Image($r('app.media.icon_back'))
-          .width(24).height(24)
-          .fillColor($r('app.color.text_primary'))
-          .onClick(() => {
-            router.back();
-          })
+        SymbolGlyph($r('sys.symbol.chevron_left'))
+          .fontSize(24)
+          .fontColor([Color.Black]) // 强制黑色
+          .onClick(() => router.back())
 
         Text('问诊医生')
           .fontSize(18)
