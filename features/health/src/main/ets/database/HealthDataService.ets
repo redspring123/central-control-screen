@@ -1,7 +1,17 @@
 import { relationalStore } from '@kit.ArkData';
 import { AppDatabase } from 'utils';
 import { Context } from '@kit.AbilityKit';
-import { preferences } from '@kit.ArkData';
+import { AppStorageV2 } from '@kit.ArkUI';
+
+// 用户信息类（用于AppStorageV2）
+class UserInfo {
+  id: number = 0;
+  account: string = '';
+  name: string = '';
+  isAdmin: boolean = false;
+
+  constructor() {}
+}
 
 // 健康数据结构
 export class HealthRecord {
@@ -113,7 +123,6 @@ export interface AIAnalysisResult {
 export class HealthDataService {
   private static isInitialized: boolean = false;
   private static currentUserId: number = 1; // 当前登录用户ID
-  private static prefs: preferences.Preferences | null = null;
 
   // 初始化服务
   static async init(context: Context): Promise<void> {
@@ -121,9 +130,6 @@ export class HealthDataService {
       try {
         await AppDatabase.init(context);
         HealthDataService.isInitialized = true;
-
-        // 初始化Preferences存储
-        HealthDataService.prefs = await preferences.getPreferences(context, 'health_data_prefs');
 
         console.info('HealthDataService: 初始化成功');
       } catch (error) {
@@ -133,44 +139,45 @@ export class HealthDataService {
     }
 
     // 获取当前登录用户ID
-    await HealthDataService.loadCurrentUserId();
+    HealthDataService.setCurrentUserId();
   }
 
-  // 从Preferences加载当前登录用户ID
-  private static async loadCurrentUserId(): Promise<void> {
+  // 设置当前登录用户ID（从AppStorage获取）
+  static setCurrentUserId(): void {
     try {
-      if (HealthDataService.prefs) {
-        const userId = await HealthDataService.prefs.get('currentUserId', 1) as number;
+      // 先尝试从AppStorage获取当前用户ID（LoginPage使用AppStorage存储）
+      const authUser: Record<string, Object> | undefined = AppStorage.get('currentUser');
+      if (authUser) {
+        const userId = authUser['id'] as number;
         if (userId > 0) {
           HealthDataService.currentUserId = userId;
-          console.info('HealthDataService: 从存储加载用户ID', userId);
-        } else {
-          HealthDataService.currentUserId = 1;
-          console.warn('HealthDataService: 存储的用户ID无效，使用默认值1');
+          console.info('HealthDataService: 从AppStorage加载用户ID', userId);
+          return;
         }
       }
+
+      // 如果AppStorage中没有，再尝试从AppStorageV2获取
+      const currentUser = AppStorageV2.connect(UserInfo, 'currentUser', () => new UserInfo());
+      if (currentUser && currentUser.id > 0) {
+        HealthDataService.currentUserId = currentUser.id;
+        console.info('HealthDataService: 从AppStorageV2加载用户ID', currentUser.id);
+      } else {
+        HealthDataService.currentUserId = 1;
+        console.warn('HealthDataService: AppStorage用户ID无效，使用默认值1');
+      }
     } catch (error) {
-      console.error('HealthDataService: 加载用户ID失败', error);
+      console.error('HealthDataService: 获取用户ID失败', error);
       HealthDataService.currentUserId = 1;
     }
   }
 
   // 设置当前登录用户ID（由外部调用，在用户登录后设置）
-  static async setCurrentUserId(userId: number): Promise<void> {
-    try {
-      if (userId > 0) {
-        HealthDataService.currentUserId = userId;
-        if (HealthDataService.prefs) {
-          await HealthDataService.prefs.put('currentUserId', userId);
-          await HealthDataService.prefs.flush();
-        }
-        console.info('HealthDataService: 当前用户ID设置为', userId);
-      } else {
-        console.warn('HealthDataService: 用户ID无效，使用默认值1');
-        HealthDataService.currentUserId = 1;
-      }
-    } catch (error) {
-      console.error('HealthDataService: 设置用户ID失败', error);
+  static setCurrentUserIdValue(userId: number): void {
+    if (userId > 0) {
+      HealthDataService.currentUserId = userId;
+      console.info('HealthDataService: 当前用户ID设置为', userId);
+    } else {
+      console.warn('HealthDataService: 用户ID无效，使用默认值1');
       HealthDataService.currentUserId = 1;
     }
   }
@@ -181,8 +188,8 @@ export class HealthDataService {
   }
 
   // 更新当前登录用户ID（用于切换用户）
-  static async updateCurrentUserId(userId: number): Promise<void> {
-    await HealthDataService.setCurrentUserId(userId);
+  static updateCurrentUserId(userId: number): void {
+    HealthDataService.setCurrentUserIdValue(userId);
   }
 
   // 格式化日期为 YYYY-MM-DD
@@ -199,6 +206,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return null;
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
       predicates.orderByDesc('date');
@@ -224,6 +235,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return null;
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
       predicates.orderByDesc('date');
@@ -249,6 +264,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return;
+      }
 
       // 确保数据绑定到当前登录用户
       data.userId = HealthDataService.currentUserId;
@@ -293,6 +312,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return null;
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
       predicates.equalTo('date', date);
@@ -317,6 +340,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return [];
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
       predicates.between('date', startDate, endDate);
@@ -342,6 +369,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return;
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
       predicates.equalTo('date', date);
@@ -360,6 +391,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return;
+      }
 
       store.beginTransaction();
 
@@ -384,10 +419,13 @@ export class HealthDataService {
       console.info(`HealthDataService: 用户${HealthDataService.currentUserId}批量保存健康数据成功，共${records.length}条记录`);
     } catch (error) {
       const store = AppDatabase.getStore();
-      await store.rollback(0);
+      if (store) {
+        await store.rollback(0);
+      }
       console.error('HealthDataService: 批量保存健康数据失败', error);
       throw new Error(`批量保存健康数据失败: ${JSON.stringify(error)}`);
     }
+
   }
 
   // 新增接口 - 获取AI健康建议
@@ -815,6 +853,10 @@ export class HealthDataService {
       HealthDataService.ensureInitialized();
 
       const store = AppDatabase.getStore();
+      if (!store) {
+        console.error('HealthDataService: Database store is null');
+        return;
+      }
       const predicates = new relationalStore.RdbPredicates('health_daily');
       predicates.equalTo('user_id', HealthDataService.currentUserId);
 

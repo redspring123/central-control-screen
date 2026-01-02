@@ -1,0 +1,11 @@
+{
+  "color": [
+    { "name": "page_bg", "value": "#FFFFFF" },
+    { "name": "text_primary", "value": "#333333" },
+    { "name": "text_secondary", "value": "#999999" },
+    { "name": "input_bg", "value": "#F5F5F5" },
+    { "name": "card_bg", "value": "#FFFFFF" },
+    { "name": "divider", "value": "#EEEEEE" },
+    { "name": "brand_red", "value": "#FF2442" }
+  ]
+}

@@ -309,7 +309,7 @@ export struct MainPage {
                     Button() {
                       Row() {
                         Column() { Image($r(`app.media.${item.icon}`)).width(20).height(20) }
-                        .width(36).height(36).backgroundColor($r('app.color.bg_icon_container')).borderRadius(10).justifyContent(FlexAlign.Center).margin({ right: 10 })
+                        .width(36).height(36).backgroundColor('rgba(255, 255, 255, 0.2)').borderRadius(10).justifyContent(FlexAlign.Center).margin({ right: 10 })
                         Text($r(`app.string.${item.key}`)).fontSize(14).fontColor(Color.White).layoutWeight(1)
                       }.width('100%').padding(8)
                     }

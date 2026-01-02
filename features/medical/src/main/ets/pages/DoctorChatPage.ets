@@ -3,6 +3,8 @@ import { AiService } from '../utils/AiService';
 import { UserRepo, UserProfile, UserInfo } from 'auth';
 import { AppDatabase } from 'utils';
 import { relationalStore } from '@kit.ArkData';
+import { DoctorDao } from '../database/DoctorDao';
+import { Doctor } from '../model/DoctorModel';
 
 interface ChatMessage {
   id: number;
@@ -26,23 +28,30 @@ export struct DoctorChatPage {
   @State messageList: ChatMessage[] = [];
   @State inputText: string = '';
   @State isTyping: boolean = false;
-  @State doctorInfo: DoctorParams | null = null;
+  @State doctorInfo: Doctor | null = null;
   @State userProfile: UserProfile | null = null;
   private scroller: Scroller = new Scroller();
 
-  aboutToAppear() {
+  async aboutToAppear() {
     // 获取路由参数
-    const params = router.getParams() as DoctorParams;
-    if (params) {
-      this.doctorInfo = params;
-      // 初始欢迎语
-      this.addAiMessage(`您好，我是${this.doctorInfo.hospital}${this.doctorInfo.department}的${this.doctorInfo.name}医生。请问您哪里不舒服？`);
+    const params = router.getParams() as Record<string, Object>;
+    if (params && params['id']) {
+      const doctorId = params['id'] as number;
+      this.doctorInfo = await DoctorDao.getDoctorById(doctorId);
+      
+      if (this.doctorInfo) {
+        // 初始欢迎语
+        this.addAiMessage(`您好，我是${this.doctorInfo.hospital}${this.doctorInfo.department}的${this.doctorInfo.name}医生。请问您哪里不舒服？`);
+      } else {
+        this.addAiMessage("您好，请问有什么可以帮您？");
+      }
     } else {
       this.addAiMessage("您好，请问有什么可以帮您？");
     }
     // 加载用户画像
     this.loadUserProfile();
   }
+
 
   async loadUserProfile() {
     const currentUser = AppStorage.get<UserInfo>('currentUser');
@@ -72,8 +81,9 @@ export struct DoctorChatPage {
 
     // 2. 今日健康数据 (直接查询数据库)
     try {
-      const store: relationalStore.RdbStore = AppDatabase.getStore();
-      const predicates = new relationalStore.RdbPredicates('health_daily');
+      const store = AppDatabase.getStore();
+      if (store) {
+        const predicates = new relationalStore.RdbPredicates('health_daily');
       // 获取今日日期 YYYY-MM-DD
       const date = new Date();
       const year = date.getFullYear();
@@ -109,6 +119,7 @@ export struct DoctorChatPage {
         血氧：${spo2}%\n`;
       }
       resultSet.close();
+      }
     } catch (e) {
       console.warn('获取健康数据失败', JSON.stringify(e));
     }
@@ -160,9 +171,10 @@ export struct DoctorChatPage {
       你所在的医院是：${this.doctorInfo.hospital}。
       你所在的科室是：${this.doctorInfo.department}。
       你的擅长领域是：${this.doctorInfo.specialty}。
+      你的挂号费是：${this.doctorInfo.fee}元。
       
       请根据你的身份和擅长领域，用专业、亲切、负责任的口吻回答患者的咨询。
-      如果患者询问你的个人信息，请根据上述设定回答。
+      如果患者询问你的个人信息（包括挂号费），请根据上述设定回答。
       对于你擅长领域的问题，请给出专业的建议；对于不擅长的领域，建议患者咨询相关科室。
       回答要简洁明了，不要长篇大论。`;
     }
@@ -190,22 +202,26 @@ export struct DoctorChatPage {
       Row() {
         SymbolGlyph($r('sys.symbol.chevron_left'))
           .fontSize(24)
-          .fontColor([Color.Black]) // 强制黑色
+          .fontColor([$r('app.color.text_primary')]) // 适配深色模式
           .onClick(() => router.back())
         
         Column() {
           Text(this.doctorInfo ? `${this.doctorInfo.name}医生` : '在线问诊')
             .fontSize(18).fontWeight(FontWeight.Bold)
-            .fontColor(Color.Black)
+            .fontColor($r('app.color.text_primary'))
           if (this.doctorInfo) {
-            Text(`${this.doctorInfo.department} | ${this.doctorInfo.title}`)
-              .fontSize(12).fontColor(Color.Gray).margin({ top: 2 })
+            Row() {
+              Text(`${this.doctorInfo.department} | ${this.doctorInfo.title}`)
+                .fontSize(12).fontColor($r('app.color.text_gray_light'))
+              Text(` | ¥${this.doctorInfo.fee}`)
+                .fontSize(12).fontColor('#FFC107').fontWeight(FontWeight.Bold)
+            }.margin({ top: 2 })
           }
         }.alignItems(HorizontalAlign.Start).margin({ left: 15 })
       }
       .width('100%')
       .padding(15)
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.bg_card'))
       .shadow({ radius: 2, color: 'rgba(0,0,0,0.1)', offsetY: 2 })
 
       // 2. 聊天列表
@@ -217,7 +233,7 @@ export struct DoctorChatPage {
                 // 医生头像
                 Image($r('app.media.icon_doctor'))
                   .width(40).height(40)
-                  .backgroundColor('#E3F2FD')
+                  .backgroundColor($r('app.color.bg_icon_container'))
                   .borderRadius(20)
                   .padding(5)
                   .margin({ right: 10 })
@@ -226,8 +242,8 @@ export struct DoctorChatPage {
                 // 消息气泡
                 Text(msg.content)
                   .fontSize(16)
-                  .fontColor(Color.Black)
-                  .backgroundColor(Color.White)
+                  .fontColor($r('app.color.text_primary'))
+                  .backgroundColor($r('app.color.bubble_bg'))
                   .padding(12)
                   .borderRadius({ topLeft: 0, topRight: 12, bottomLeft: 12, bottomRight: 12 })
                   .layoutWeight(1)
@@ -248,7 +264,7 @@ export struct DoctorChatPage {
                 Image($r('app.media.user_icon'))
                   .width(40).height(40)
                   .borderRadius(20)
-                  .backgroundColor('#F5F5F5')
+                  .backgroundColor($r('app.color.bg_icon_container'))
               }
             }
             .width('100%')
@@ -260,16 +276,16 @@ export struct DoctorChatPage {
       .layoutWeight(1)
       .width('100%')
       .padding(15)
-      .backgroundColor('#F5F7FA')
+      .backgroundColor($r('app.color.bg_page'))
 
       // 3. 输入区
       Row() {
         TextInput({ placeholder: '请描述您的症状...', text: this.inputText })
           .layoutWeight(1)
           .height(40)
-          .fontColor(Color.Black)
-          .placeholderColor(Color.Gray)
-          .backgroundColor(Color.White)
+          .fontColor($r('app.color.text_primary'))
+          .placeholderColor($r('app.color.text_gray_light'))
+          .backgroundColor($r('app.color.input_bg'))
           .borderRadius(20)
           .padding({ left: 15, right: 15 })
           .onChange((value) => this.inputText = value)
@@ -283,9 +299,10 @@ export struct DoctorChatPage {
       }
       .width('100%')
       .padding(10)
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.bg_card'))
     }
     .width('100%')
     .height('100%')
+    .backgroundColor($r('app.color.bg_page')) // 确保根容器也有背景色
   }
 }

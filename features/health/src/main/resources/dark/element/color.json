@@ -1,17 +1,18 @@
 {
   "color": [
-    { "name": "bg_page", "value": "#FF030724" },
-    { "name": "bg_card", "value": "#1AFFFFFF" },
-    { "name": "bg_icon_container", "value": "#0DFFFFFF" },
+    { "name": "bg_page", "value": "#000000" },
+    { "name": "bg_card", "value": "#1C1C1E" },
+    { "name": "bg_icon_container", "value": "#333333" },
 
-    { "name": "text_white", "value": "#FFFFFFFF" },
-    { "name": "text_gray", "value": "#99FFFFFF" },
+    { "name": "text_white", "value": "#FFFFFF" },
+    { "name": "text_gray", "value": "#AAAAAA" },
     { "name": "text_cyan", "value": "#00D1FF" },
     { "name": "text_safe", "value": "#52C41A" },
     { "name": "text_warn", "value": "#FAAD14" },
 
-    { "name": "bubble_bg", "value": "#33000000" },
+    { "name": "bubble_bg", "value": "#333333" },
     { "name": "bubble_border", "value": "#8000D1FF" },
+    { "name": "input_bg", "value": "#333333" },
 
     { "name": "btn_call_bg", "value": "#FF4D4F" },
     { "name": "header_background", "value": "#FF265BA9"}

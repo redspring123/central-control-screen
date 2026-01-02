@@ -89,8 +89,11 @@ export struct ForumPage {
             promptAction.showToast({message: '请先登录'});
             this.currentIndex = 2;
           } else {
-            this.pageStack.pushPath({ name: 'PublishPage' });
-            this.currentIndex = 0;
+            // 修复：使用 setTimeout 确保状态更新不会冲突，并强制重置 currentIndex
+            setTimeout(() => {
+              this.pageStack.pushPath({ name: 'PublishPage' });
+              this.currentIndex = 0;
+            }, 10);
           }
         } else {
           this.currentIndex = index;
@@ -121,15 +124,23 @@ export struct ForumPage {
   @Builder TabBuilder(title: string, index: number, icon: Resource) {
     Column() {
       // 这里的 fillColor 可以留着，因为底部 Tab 图标通常是简单的 SVG
-      Image(icon).width(24).fillColor(this.currentIndex === index ? '#FF2442' : '#999')
-      Text(title).fontSize(10).fontColor(this.currentIndex === index ? '#FF2442' : '#999').margin({top:2})
+      Image(icon).width(24).fillColor(this.currentIndex === index ? $r('app.color.brand_red') : $r('app.color.text_secondary'))
+      Text(title).fontSize(10).fontColor(this.currentIndex === index ? $r('app.color.brand_red') : $r('app.color.text_secondary')).margin({top:2})
     }.justifyContent(FlexAlign.Center).height('100%')
   }
 
   @Builder AddBtnBuilder() {
     Column() {
-      Image($r('app.media.ic_public_add')).width(38).height(38).fillColor('#FF2442').margin({top: 5})
-    }.height('100%')
+      Stack() {
+        // 背景圆圈，确保在任何模式下都有对比度
+        Circle().width(40).height(40).fill($r('app.color.bg_card'))
+        // 图标
+        Image($r('app.media.ic_public_add'))
+          .width(38).height(38)
+          .fillColor($r('app.color.brand_red'))
+      }
+      .margin({top: 5})
+    }.height('100%').justifyContent(FlexAlign.Center)
   }
 }
 
@@ -187,18 +198,18 @@ struct HomePage {
     Column() {
       Row() {
         TextInput({ placeholder: '搜标题/标签...', text: this.searchText })
-          .layoutWeight(1).backgroundColor('#F5F5F5').borderRadius(18).height(36)
+          .layoutWeight(1).backgroundColor($r('app.color.input_bg')).borderRadius(18).height(36)
           .onChange(v => this.searchText = v).onSubmit(() => this.loadData())
-        Text("搜索").fontColor('#333').margin({left: 10}).onClick(() => this.loadData())
+        Text("搜索").fontColor($r('app.color.text_primary')).margin({left: 10}).onClick(() => this.loadData())
       }.padding({left: 10, right: 10, top: 5, bottom: 5})
 
       if (this.isLoading && this.posts.length === 0) {
         // 加载中提示
-        Column() { Text("加载中...").fontColor('#999').margin({top: 50}) }.width('100%').height('100%')
+        Column() { Text("加载中...").fontColor($r('app.color.text_secondary')).margin({top: 50}) }.width('100%').height('100%')
       } else if (this.posts.length === 0) {
         // 空状态提示
         Column() {
-          Text("暂无内容").fontColor('#999').margin({top: 50})
+          Text("暂无内容").fontColor($r('app.color.text_secondary')).margin({top: 50})
           Button("刷新").margin({top:10}).onClick(()=>this.loadData())
         }.width('100%').height('100%')
       } else {
@@ -210,14 +221,14 @@ struct HomePage {
                   .width('100%').height(180).objectFit(ImageFit.Cover)
                   .borderRadius({topLeft: 8, topRight: 8}).backgroundColor('#E0E0E0')
 
-                Text(item.title).fontSize(14).fontWeight(FontWeight.Bold)
+                Text(item.title).fontSize(14).fontWeight(FontWeight.Bold).fontColor($r('app.color.text_primary'))
                   .maxLines(2).textOverflow({overflow: TextOverflow.Ellipsis}).padding(8)
 
                 Row() {
                   Row() {
                     Image(item.author_avatar ? `${DOMAIN}${item.author_avatar}` : '')
                       .width(16).height(16).borderRadius(8).backgroundColor('#ccc')
-                    Text(item.author_name).fontSize(10).fontColor('#666')
+                    Text(item.author_name).fontSize(10).fontColor($r('app.color.text_secondary'))
                       .margin({left: 4}).layoutWeight(1).maxLines(1)
                   }.layoutWeight(1)
 
@@ -225,12 +236,12 @@ struct HomePage {
                     // ⚡️ 首页点赞变色 - 使用系统 Symbol 实现实心效果
                     SymbolGlyph(item.is_liked ? $r('sys.symbol.heart_fill') : $r('sys.symbol.heart'))
                       .fontSize(12)
-                      .fontColor([item.is_liked ? Color.Red : '#999'])
-                    Text(` ${item.like_count}`).fontSize(10).fontColor('#999')
+                      .fontColor([item.is_liked ? Color.Red : $r('app.color.text_secondary')])
+                    Text(` ${item.like_count}`).fontSize(10).fontColor($r('app.color.text_secondary'))
                   }
                 }.padding({left: 8, right: 8, bottom: 8}).width('100%').justifyContent(FlexAlign.SpaceBetween)
               }
-              .backgroundColor(Color.White).borderRadius(8)
+              .backgroundColor($r('app.color.card_bg')).borderRadius(8)
               .onClick(() => {
                 this.pageStack.pushPath({ name: 'PostDetail', param: new PostParams(item.id) })
               })
@@ -238,7 +249,7 @@ struct HomePage {
           })
         }
         .columnsTemplate("1fr 1fr").columnsGap(10).rowsGap(10).padding(10)
-        .layoutWeight(1).backgroundColor('#F6F7F9')
+        .layoutWeight(1).backgroundColor($r('app.color.page_bg'))
       }
     }
   }
@@ -713,13 +724,25 @@ struct PublishView {
     NavDestination() {
       Column() {
         Row() {
-          Text("取消").onClick(() => this.pageStack.pop()).fontSize(16)
+          Text("取消").onClick(() => this.pageStack.pop()).fontSize(16).fontColor($r('app.color.text_primary'))
           Blank()
-          Button(this.editPostId > 0 ? "保存" : "发布").height(32).backgroundColor('#FF2442').fontSize(14).onClick(() => this.doPublish())
+          Button(this.editPostId > 0 ? "保存" : "发布").height(32).backgroundColor($r('app.color.brand_red')).fontSize(14).onClick(() => this.doPublish())
         }.padding(15).width('100%')
-        TextInput({ placeholder: '标题', text: this.title }).fontSize(18).fontWeight(FontWeight.Bold).margin(10).onChange(v=>this.title=v)
-        TextArea({ placeholder: '正文...', text: this.content }).height(100).margin(10).backgroundColor(Color.Transparent).onChange(v=>this.content=v)
-        TextInput({ placeholder: '#标签 (用空格分隔)', text: this.tags }).margin(10).onChange(v=>this.tags=v)
+        TextInput({ placeholder: '标题', text: this.title })
+          .fontSize(18).fontWeight(FontWeight.Bold).margin(10)
+          .fontColor($r('app.color.text_primary'))
+          .backgroundColor($r('app.color.input_bg'))
+          .onChange(v=>this.title=v)
+        TextArea({ placeholder: '正文...', text: this.content })
+          .height(100).margin(10)
+          .fontColor($r('app.color.text_primary'))
+          .backgroundColor(Color.Transparent)
+          .onChange(v=>this.content=v)
+        TextInput({ placeholder: '#标签 (用空格分隔)', text: this.tags })
+          .margin(10)
+          .fontColor($r('app.color.text_primary'))
+          .backgroundColor($r('app.color.input_bg'))
+          .onChange(v=>this.tags=v)
         
         // Image Grid
         Grid() {
@@ -731,7 +754,7 @@ struct PublishView {
                         SymbolGlyph($r('sys.symbol.xmark_circle_fill'))
                             .fontSize(24)
                             .fontColor([Color.Red])
-                            .backgroundColor(Color.White)
+                            .backgroundColor($r('app.color.bg_card'))
                             .borderRadius(12)
                             .margin(5)
                             .zIndex(1)
@@ -746,8 +769,8 @@ struct PublishView {
             })
             GridItem() {
                 Column() {
-                    Image($r('app.media.ic_public_add')).width(30).height(30).fillColor('#999')
-                    Text("添加图片").fontSize(12).fontColor('#999').margin({top:5})
+                    Image($r('app.media.ic_public_add')).width(30).height(30).fillColor($r('app.color.text_secondary'))
+                    Text("添加图片").fontSize(12).fontColor($r('app.color.text_secondary')).margin({top:5})
                 }
                 .width('100%').height(100).backgroundColor('#F5F5F5').borderRadius(8)
                 .justifyContent(FlexAlign.Center)
@@ -782,10 +805,19 @@ struct LoginView {
   build() {
     Column({ space: 15 }) {
       Image($r('app.media.app_icon')).width(80).height(80).borderRadius(15).margin({top: 50})
-      TextInput({ placeholder: '用户名', text: this.username }).width('50%').onChange(v=>this.username=v)
-      TextInput({ placeholder: '密码', text: this.password }).type(InputType.Password).width('50%').onChange(v=>this.password=v)
-      Button("登录 / 注册").width('35%').height(45).backgroundColor('#FF2442').margin({top: 20}).onClick(() => this.doLogin())
-    }.width('100%').height('100%').backgroundColor(Color.White)
+      TextInput({ placeholder: '用户名', text: this.username })
+        .width('50%')
+        .backgroundColor($r('app.color.input_bg'))
+        .fontColor($r('app.color.text_primary'))
+        .onChange(v=>this.username=v)
+      TextInput({ placeholder: '密码', text: this.password })
+        .type(InputType.Password)
+        .width('50%')
+        .backgroundColor($r('app.color.input_bg'))
+        .fontColor($r('app.color.text_primary'))
+        .onChange(v=>this.password=v)
+      Button("登录 / 注册").width('35%').height(45).backgroundColor($r('app.color.brand_red')).margin({top: 20}).onClick(() => this.doLogin())
+    }.width('100%').height('100%').backgroundColor($r('app.color.page_bg'))
   }
 }
 
@@ -845,29 +877,29 @@ struct SearchPage {
             .height(30)
             .fontSize(14)
             .onClick(() => this.doSearch())
-        }.padding(10).width('100%').backgroundColor(Color.White)
+        }.padding(10).width('100%').backgroundColor($r('app.color.page_bg'))
 
         if (this.isLoading) {
           LoadingProgress().width(50).height(50).margin({top: 50})
         } else if (this.searchResults.length === 0) {
-          Text("暂无相关内容").margin({top: 50}).fontColor('#999')
+          Text("暂无相关内容").margin({top: 50}).fontColor($r('app.color.text_secondary'))
         } else {
           List({ space: 10 }) {
             ForEach(this.searchResults, (item: ForumPost) => {
               ListItem() {
                 Row() {
                   Image(getImageUrl(item.images && item.images.length > 0 ? item.images[0] : ''))
-                    .width(100).height(100).borderRadius(8).objectFit(ImageFit.Cover).backgroundColor('#f0f0f0')
+                    .width(100).height(100).borderRadius(8).objectFit(ImageFit.Cover).backgroundColor($r('app.color.input_bg'))
                   Column() {
-                    Text(item.title).fontSize(16).fontWeight(FontWeight.Bold).maxLines(1).textOverflow({overflow: TextOverflow.Ellipsis})
-                    Text(item.content).fontSize(14).fontColor('#666').maxLines(2).textOverflow({overflow: TextOverflow.Ellipsis}).margin({top: 5})
+                    Text(item.title).fontSize(16).fontWeight(FontWeight.Bold).maxLines(1).textOverflow({overflow: TextOverflow.Ellipsis}).fontColor($r('app.color.text_primary'))
+                    Text(item.content).fontSize(14).fontColor($r('app.color.text_secondary')).maxLines(2).textOverflow({overflow: TextOverflow.Ellipsis}).margin({top: 5})
                     Row() {
                       Image(item.author_avatar ? `${DOMAIN}${item.author_avatar}` : $r('app.media.app_icon'))
                         .width(20).height(20).borderRadius(10)
-                      Text(item.author_name).fontSize(12).fontColor('#999').margin({left: 5})
+                      Text(item.author_name).fontSize(12).fontColor($r('app.color.text_secondary')).margin({left: 5})
                       Blank()
-                      SymbolGlyph($r('sys.symbol.heart')).fontSize(14).fontColor(['#999'])
-                      Text(item.like_count.toString()).fontSize(12).fontColor('#999').margin({left: 2})
+                      SymbolGlyph($r('sys.symbol.heart')).fontSize(14).fontColor([$r('app.color.text_secondary')])
+                      Text(item.like_count.toString()).fontSize(12).fontColor($r('app.color.text_secondary')).margin({left: 2})
                     }.width('100%').margin({top: 10})
                   }.layoutWeight(1).height(100).padding({left: 10}).justifyContent(FlexAlign.SpaceBetween).alignItems(HorizontalAlign.Start)
                 }
