@@ -10,6 +10,7 @@ const DDL: string[] = [
     password TEXT NOT NULL,
     name TEXT,
     phone TEXT,
+    isAdmin INTEGER DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );`,
   `CREATE INDEX IF NOT EXISTS idx_user_account ON user(account);`,
@@ -148,9 +149,64 @@ export class AppDatabase {
       for (const sql of DDL) {
         await AppDatabase.store.executeSql(sql);
       }
+
+      // 数据库升级逻辑：尝试添加 isAdmin 字段
+      try {
+        await AppDatabase.store.executeSql('ALTER TABLE user ADD COLUMN isAdmin INTEGER DEFAULT 0');
+        console.info('AppDatabase: 成功添加 isAdmin 字段');
+      } catch (e) {
+        // 如果字段已存在，会抛出错误，忽略即可
+      }
+
       console.info('AppDatabase: 初始化成功');
+
+      // 检查并创建默认管理员
+      await AppDatabase.createDefaultAdmin();
+
     } catch (err) {
       console.error(`AppDatabase: 初始化失败 - ${JSON.stringify(err)}`);
+    }
+  }
+
+  // 创建默认管理员
+  private static async createDefaultAdmin() {
+    if (!AppDatabase.store) return;
+    try {
+      // 检查是否存在 admin 账号
+      let predicates = new relationalStore.RdbPredicates('user');
+      predicates.equalTo('account', 'admin');
+      let rs = await AppDatabase.store.query(predicates);
+      
+      if (rs.rowCount === 0) {
+        console.info('AppDatabase: 创建默认管理员账号 (admin/123456)');
+        const valueBucket: relationalStore.ValuesBucket = {
+          'account': 'admin',
+          'password': '123456', // 实际项目中应加密
+          'name': '系统管理员',
+          'isAdmin': 1,
+          'created_at': new Date().toISOString()
+        };
+        await AppDatabase.store.insert('user', valueBucket);
+        
+        // 同时创建画像，避免查询报错
+        const userRs = await AppDatabase.store.query(predicates);
+        if (userRs.goToFirstRow()) {
+           const userId = userRs.getLong(userRs.getColumnIndex('id'));
+           const profileValues: relationalStore.ValuesBucket = {
+             'user_id': userId,
+             'age': 30,
+             'gender': 'M',
+             'height_cm': 175,
+             'weight_kg': 70,
+             'created_at': new Date().toISOString()
+           };
+           await AppDatabase.store.insert('user_profile', profileValues);
+        }
+        userRs.close();
+      }
+      rs.close();
+    } catch (e) {
+      console.error('AppDatabase: 创建默认管理员失败', e);
     }
   }
 

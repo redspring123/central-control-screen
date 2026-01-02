@@ -5,6 +5,7 @@ export interface UserInfo {
   id: number;
   account: string;
   name: string;
+  isAdmin: boolean;
 }
 
 export interface UserProfile {
@@ -147,13 +148,33 @@ export class UserRepo {
 
     if (resultSet.rowCount > 0) {
       resultSet.goToFirstRow();
+      const isAdminVal = resultSet.getLong(resultSet.getColumnIndex('isAdmin'));
       result = {
         id: resultSet.getLong(resultSet.getColumnIndex('id')),
         account: resultSet.getString(resultSet.getColumnIndex('account')),
-        name: resultSet.getString(resultSet.getColumnIndex('name'))
+        name: resultSet.getString(resultSet.getColumnIndex('name')),
+        isAdmin: isAdminVal === 1
       };
     }
     resultSet.close();
     return result;
+  }
+
+  // 设置用户为管理员
+  static async setAdmin(account: string, isAdmin: boolean): Promise<boolean> {
+    const store = AppDatabase.getStore();
+    const values: ValuesBucket = {
+      'isAdmin': isAdmin ? 1 : 0
+    };
+    let predicates = new relationalStore.RdbPredicates('user');
+    predicates.equalTo('account', account);
+    
+    try {
+      const rows = await store.update(values, predicates);
+      return rows > 0;
+    } catch (e) {
+      console.error('Set admin failed:', e);
+      return false;
+    }
   }
 }
