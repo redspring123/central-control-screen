@@ -6,7 +6,9 @@ import { fileIo as fs } from '@kit.CoreFileKit';
 import { ApiResponse } from '../model/ForumModel';
 
 // 🔴 请再次确认这个 IP 是对的！
-const BASE_URL = 'http://172.26.117.216:8000';
+// const BASE_URL = 'http://172.26.117.216:8000';
+const BASE_URL = 'http://172.26.23.157:8000';
+
 
 interface UploadData {
   url?: string;
@@ -84,8 +86,11 @@ export class ForumService {
     return ForumService.request('/api/user/update', http.RequestMethod.POST, params);
   }
   static async updatePost(params: string): Promise<ApiResponse<null>> {
-    // 尝试使用 /api/post_update (猜测的命名，因为 /api/post/update 报 405，/api/update_post 报 404)
-    return ForumService.request('/api/post_update', http.RequestMethod.POST, params);
+    return ForumService.request('/api/post/update', http.RequestMethod.POST, params);
+  }
+  static async deletePost(userId: number, postId: number): Promise<ApiResponse<null>> {
+    // 调用后端删除接口
+    return ForumService.request('/api/post/delete', http.RequestMethod.POST, `user_id=${userId}&post_id=${postId}`);
   }
 
   // 图片上传 (修复版：使用 http 替代 request.uploadFile 以获取响应体)

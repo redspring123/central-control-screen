@@ -6,7 +6,8 @@ import { request } from '@kit.BasicServicesKit';
 import { common } from '@kit.AbilityKit';
 
 // 🔴 确认 IP 地址
-const DOMAIN = 'http://172.26.117.216:8000';
+// const DOMAIN = 'http://172.26.117.216:8000';
+const DOMAIN = 'http://172.26.23.157:8000';
 
 // ⚡️ 图片 URL 处理工具 (强力修复版)
 function getImageUrl(url: string): string {
@@ -57,6 +58,11 @@ class PublishParams {
   images?: string[]
 }
 
+class SearchParams {
+  keyword: string = ''
+  constructor(keyword: string) { this.keyword = keyword }
+}
+
 AppStorage.setOrCreate('currentUserId', 0);
 AppStorage.setOrCreate('refreshFeed', 0);
 
@@ -105,10 +111,11 @@ export struct ForumPage {
         title: (param as PublishParams)?.title || '',
         content: (param as PublishParams)?.content || '',
         tags: (param as PublishParams)?.tags || '',
-        uploadedUrl: ((param as PublishParams)?.images && (param as PublishParams).images!.length > 0) ? (param as PublishParams).images![0] : ''
+        uploadedUrls: (param as PublishParams)?.images || []
       })
     }
     else if (name === 'UserProfile') ProfileView({ userId: (param as PostParams).id, isSelf: false })
+    else if (name === 'SearchPage') SearchPage({ keyword: (param as SearchParams).keyword })
   }
 
   @Builder TabBuilder(title: string, index: number, icon: Resource) {
@@ -153,10 +160,13 @@ struct HomePage {
     const res = await ForumService.getFeed(this.searchText);
     this.isLoading = false;
     if (res.success && res.data) {
-      // ⚡️ 修复：防止 images 字段是字符串（后端未解析 JSON 的情况）
+      // ⚡️ 修复：防止 images/tags 字段是字符串（后端未解析 JSON 的情况）
       this.posts = res.data.map(item => {
         if (typeof item.images === 'string') {
           try { item.images = JSON.parse(item.images); } catch(e) { item.images = []; }
+        }
+        if (typeof item.tags === 'string') {
+          try { item.tags = JSON.parse(item.tags); } catch(e) { item.tags = []; }
         }
         return item;
       });
@@ -251,9 +261,12 @@ struct PostDetailView {
     const res = await ForumService.getPostDetail(this.postId);
     if (res.success && res.data) {
       this.detail = res.data;
-      // ⚡️ 修复：防止 images 是字符串
+      // ⚡️ 修复：防止 images/tags 是字符串
       if (typeof this.detail.post.images === 'string') {
          try { this.detail.post.images = JSON.parse(this.detail.post.images); } catch(e) { this.detail.post.images = []; }
+      }
+      if (typeof this.detail.post.tags === 'string') {
+         try { this.detail.post.tags = JSON.parse(this.detail.post.tags); } catch(e) { this.detail.post.tags = []; }
       }
       this.isLiked = (this.detail.post.is_liked ?? 0) > 0;
       this.isFaved = (this.detail.post.is_faved ?? 0) > 0;
@@ -283,6 +296,31 @@ struct PostDetailView {
     this.isFaved = !this.isFaved;
     await ForumService.favPost(this.postId, uid);
     AppStorage.setOrCreate('refreshFeed', Date.now());
+  }
+
+  async deletePost() {
+    const uid = AppStorage.get<number>('currentUserId');
+    if (!uid) return;
+    
+    const res = await promptAction.showDialog({
+      title: '确认删除',
+      message: '删除后无法恢复，确定要删除吗？',
+      buttons: [
+        { text: '取消', color: '#666666' },
+        { text: '删除', color: '#FF0000' }
+      ]
+    });
+
+    if (res.index === 1) {
+      const result = await ForumService.deletePost(uid, this.postId);
+      if (result.success) {
+        promptAction.showToast({ message: '删除成功' });
+        AppStorage.setOrCreate('refreshFeed', Date.now());
+        this.pageStack.pop();
+      } else {
+        promptAction.showToast({ message: result.message || '删除失败' });
+      }
+    }
   }
 
   // 🔥 终极必杀技：颜色滤镜矩阵
@@ -322,18 +360,28 @@ struct PostDetailView {
           
           // ✏️ 编辑按钮：只有作者自己可见
           if (this.detail && this.currentUserId === this.detail.post.user_id) {
-            Text("编辑")
-              .fontSize(16)
-              .fontColor('#333')
-              .onClick(() => {
-                const p = new PublishParams();
-                p.postId = this.detail?.post.id;
-                p.title = this.detail?.post.title;
-                p.content = this.detail?.post.content;
-                p.tags = this.detail?.post.tags;
-                p.images = this.detail?.post.images;
-                this.pageStack.pushPath({ name: 'PublishPage', param: p });
-              })
+            Row() {
+              Text("编辑")
+                .fontSize(16)
+                .fontColor('#333')
+                .onClick(() => {
+                  const p = new PublishParams();
+                  p.postId = this.detail?.post.id;
+                  p.title = this.detail?.post.title;
+                  p.content = this.detail?.post.content;
+                  p.tags = this.detail?.post.tags ? this.detail?.post.tags.join(' ') : '';
+                  p.images = this.detail?.post.images;
+                  this.pageStack.pushPath({ name: 'PublishPage', param: p });
+                })
+
+              Text("删除")
+                .fontSize(16)
+                .fontColor(Color.Red)
+                .margin({ left: 15 })
+                .onClick(() => {
+                  this.deletePost();
+                })
+            }
           }
         }.padding(10).width('100%')
         if (this.detail) {
@@ -351,10 +399,30 @@ struct PostDetailView {
                   this.pageStack.pushPath({ name: 'UserProfile', param: new PostParams(this.detail?.post.user_id ?? 0) })
                 })
 
-                Image(this.detail.post.images[0] ? getImageUrl(this.detail.post.images[0]) : '').width('100%').objectFit(ImageFit.Contain)
+                if (this.detail.post.images && this.detail.post.images.length > 0) {
+                  Swiper() {
+                    ForEach(this.detail.post.images, (img: string) => {
+                      Image(getImageUrl(img)).width('100%').objectFit(ImageFit.Contain)
+                    })
+                  }
+                  .height(300)
+                  .indicator(true)
+                  .autoPlay(false)
+                }
+
                 Text(this.detail.post.title).fontSize(20).fontWeight(FontWeight.Bold).padding(10)
                 Text(this.detail.post.content).fontSize(16).padding({left: 10, right: 10})
-                Text(this.detail.post.tags).fontSize(14).fontColor('#007DFF').padding(10)
+                
+                Flex({ wrap: FlexWrap.Wrap }) {
+                  ForEach(this.detail.post.tags, (tag: string) => {
+                    Text('#' + tag)
+                      .fontSize(14).fontColor('#007DFF')
+                      .padding({ right: 10, top: 5, bottom: 5 })
+                      .onClick(() => {
+                        this.pageStack.pushPath({ name: 'SearchPage', param: new SearchParams(tag) })
+                      })
+                  })
+                }.padding(10)
               }.alignItems(HorizontalAlign.Start)
             }
             ListItem() { Text(`评论 (${this.detail.comments.length})`).fontSize(14).fontColor('#999').padding(10).backgroundColor('#f5f5f5').width('100%') }
@@ -573,50 +641,62 @@ struct PublishView {
   @State title: string = '';
   @State content: string = '';
   @State tags: string = '';
-  @State selectedImage: string = '';
-  @State uploadedUrl: string = '';
+  @State uploadedUrls: string[] = [];
 
   async selectImage() {
     try {
       const photoPicker = new picker.PhotoViewPicker();
-      const result = await photoPicker.select({ MIMEType: picker.PhotoViewMIMETypes.IMAGE_TYPE, maxSelectNumber: 1 });
+      const result = await photoPicker.select({ MIMEType: picker.PhotoViewMIMETypes.IMAGE_TYPE, maxSelectNumber: 9 });
       if (result.photoUris.length > 0) {
-        this.selectedImage = result.photoUris[0];
-        this.doUpload(this.selectedImage);
+        this.doUploadBatch(result.photoUris);
       }
     } catch (e) {}
   }
 
-  async doUpload(srcUri: string) {
+  async doUploadBatch(uris: string[]) {
     promptAction.showToast({ message: '正在上传...' });
     const context = getContext(this) as common.UIAbilityContext;
-    try {
-      const file = fs.openSync(srcUri, fs.OpenMode.READ_ONLY);
-      const name = `pub_${Date.now()}.jpg`;
-      const dest = `${context.cacheDir}/${name}`;
-      try { fs.unlinkSync(dest); } catch(e) {}
-      fs.copyFileSync(file.fd, dest);
-      fs.closeSync(file);
-      const url = await ForumService.uploadImage(context, `internal://cache/${name}`);
-      if (url) {
-        this.uploadedUrl = url;
-        promptAction.showToast({message:'图片上传成功'});
-      }
-    } catch(e) { promptAction.showToast({message:'上传出错'}); }
+    let successCount = 0;
+    
+    for (const srcUri of uris) {
+        try {
+          const file = fs.openSync(srcUri, fs.OpenMode.READ_ONLY);
+          const name = `pub_${Date.now()}_${Math.random().toString().slice(2,8)}.jpg`;
+          const dest = `${context.cacheDir}/${name}`;
+          try { fs.unlinkSync(dest); } catch(e) {}
+          fs.copyFileSync(file.fd, dest);
+          fs.closeSync(file);
+          const url = await ForumService.uploadImage(context, `internal://cache/${name}`);
+          if (url) {
+            this.uploadedUrls.push(url);
+            successCount++;
+          }
+        } catch(e) { console.error("Upload failed", e); }
+    }
+    
+    if (successCount > 0) {
+        promptAction.showToast({message:`成功上传 ${successCount} 张图片`});
+    } else {
+        promptAction.showToast({message:'上传失败'});
+    }
   }
 
   async doPublish() {
     const uid = AppStorage.get<number>('currentUserId');
-    const finalImg = this.uploadedUrl ? `["${this.uploadedUrl}"]` : '["/uploads/default_post.jpg"]';
+    // Convert tags string to array string
+    const tagArray = this.tags.split(/[,，\s]+/).filter(t => t.trim() !== '');
+    const finalTags = JSON.stringify(tagArray);
+    
+    const finalImg = JSON.stringify(this.uploadedUrls);
     
     let res: ApiResponse<null>;
     if (this.editPostId > 0) {
       // 编辑模式
-      const params = `post_id=${this.editPostId}&user_id=${uid}&title=${this.title}&content=${this.content}&tags=${this.tags}&images=${finalImg}`;
+      const params = `post_id=${this.editPostId}&user_id=${uid}&title=${this.title}&content=${this.content}&tags=${finalTags}&images=${finalImg}`;
       res = await ForumService.updatePost(params);
     } else {
       // 发布模式
-      const params = `user_id=${uid}&title=${this.title}&content=${this.content}&tags=${this.tags}&images=${finalImg}`;
+      const params = `user_id=${uid}&title=${this.title}&content=${this.content}&tags=${finalTags}&images=${finalImg}`;
       res = await ForumService.publish(params);
     }
 
@@ -639,17 +719,47 @@ struct PublishView {
         }.padding(15).width('100%')
         TextInput({ placeholder: '标题', text: this.title }).fontSize(18).fontWeight(FontWeight.Bold).margin(10).onChange(v=>this.title=v)
         TextArea({ placeholder: '正文...', text: this.content }).height(100).margin(10).backgroundColor(Color.Transparent).onChange(v=>this.content=v)
-        TextInput({ placeholder: '#标签', text: this.tags }).margin(10).onChange(v=>this.tags=v)
-        Row() {
-          if (this.selectedImage) {
-             Image(this.selectedImage).width(100).height(100).borderRadius(8).onClick(()=>this.selectImage())
-          } else if (this.uploadedUrl) {
-             // 编辑模式下显示已有图片
-             Image(getImageUrl(this.uploadedUrl)).width(100).height(100).borderRadius(8).onClick(()=>this.selectImage())
-          } else {
-             Image($r('app.media.ic_public_add')).width(80).height(80).backgroundColor('#F5F5F5').padding(25).onClick(()=>this.selectImage())
-          }
-        }.padding(15).width('100%').justifyContent(FlexAlign.Start)
+        TextInput({ placeholder: '#标签 (用空格分隔)', text: this.tags }).margin(10).onChange(v=>this.tags=v)
+        
+        // Image Grid
+        Grid() {
+            ForEach(this.uploadedUrls, (img: string, index: number) => {
+                GridItem() {
+                    Stack({ alignContent: Alignment.TopEnd }) {
+                        Image(getImageUrl(img)).width('100%').height(100).borderRadius(8).objectFit(ImageFit.Cover)
+                        // Delete button
+                        SymbolGlyph($r('sys.symbol.xmark_circle_fill'))
+                            .fontSize(24)
+                            .fontColor([Color.Red])
+                            .backgroundColor(Color.White)
+                            .borderRadius(12)
+                            .margin(5)
+                            .zIndex(1)
+                            .onClick(() => {
+                                // Create a new array to ensure UI update
+                                let newUrls = [...this.uploadedUrls];
+                                newUrls.splice(index, 1);
+                                this.uploadedUrls = newUrls;
+                            })
+                    }
+                }
+            })
+            GridItem() {
+                Column() {
+                    Image($r('app.media.ic_public_add')).width(30).height(30).fillColor('#999')
+                    Text("添加图片").fontSize(12).fontColor('#999').margin({top:5})
+                }
+                .width('100%').height(100).backgroundColor('#F5F5F5').borderRadius(8)
+                .justifyContent(FlexAlign.Center)
+                .onClick(() => this.selectImage())
+            }
+        }
+        .columnsTemplate('1fr 1fr 1fr')
+        .columnsGap(10)
+        .rowsGap(10)
+        .padding(10)
+        .height(300)
+
       }
     }.hideTitleBar(true)
   }
@@ -676,5 +786,100 @@ struct LoginView {
       TextInput({ placeholder: '密码', text: this.password }).type(InputType.Password).width('50%').onChange(v=>this.password=v)
       Button("登录 / 注册").width('35%').height(45).backgroundColor('#FF2442').margin({top: 20}).onClick(() => this.doLogin())
     }.width('100%').height('100%').backgroundColor(Color.White)
+  }
+}
+
+@Component
+struct SearchPage {
+  @Consume('pageStack') pageStack: NavPathStack;
+  @State keyword: string = '';
+  @State searchResults: ForumPost[] = [];
+  @State isLoading: boolean = false;
+
+  aboutToAppear() {
+    if (this.keyword) {
+      this.doSearch();
+    }
+  }
+
+  async doSearch() {
+    this.isLoading = true;
+    const res = await ForumService.getFeed(this.keyword);
+    if (res.success && res.data) {
+      // Parse images and tags
+      this.searchResults = res.data.map(item => {
+        if (typeof item.images === 'string') {
+            try { item.images = JSON.parse(item.images); } catch(e) { item.images = []; }
+        }
+        if (typeof item.tags === 'string') {
+            try { item.tags = JSON.parse(item.tags); } catch(e) { item.tags = []; }
+        }
+        return item;
+      });
+    } else {
+      this.searchResults = [];
+    }
+    this.isLoading = false;
+  }
+
+  build() {
+    NavDestination() {
+      Column() {
+        // Search Bar
+        Row() {
+          SymbolGlyph($r('sys.symbol.chevron_left'))
+            .fontSize(24)
+            .margin({right: 10})
+            .onClick(() => this.pageStack.pop())
+          TextInput({ placeholder: '搜索...', text: this.keyword })
+            .layoutWeight(1)
+            .height(40)
+            .onChange((value) => {
+              this.keyword = value;
+            })
+            .onSubmit(() => {
+              this.doSearch();
+            })
+          Button("搜索")
+            .margin({left: 10})
+            .height(30)
+            .fontSize(14)
+            .onClick(() => this.doSearch())
+        }.padding(10).width('100%').backgroundColor(Color.White)
+
+        if (this.isLoading) {
+          LoadingProgress().width(50).height(50).margin({top: 50})
+        } else if (this.searchResults.length === 0) {
+          Text("暂无相关内容").margin({top: 50}).fontColor('#999')
+        } else {
+          List({ space: 10 }) {
+            ForEach(this.searchResults, (item: ForumPost) => {
+              ListItem() {
+                Row() {
+                  Image(getImageUrl(item.images && item.images.length > 0 ? item.images[0] : ''))
+                    .width(100).height(100).borderRadius(8).objectFit(ImageFit.Cover).backgroundColor('#f0f0f0')
+                  Column() {
+                    Text(item.title).fontSize(16).fontWeight(FontWeight.Bold).maxLines(1).textOverflow({overflow: TextOverflow.Ellipsis})
+                    Text(item.content).fontSize(14).fontColor('#666').maxLines(2).textOverflow({overflow: TextOverflow.Ellipsis}).margin({top: 5})
+                    Row() {
+                      Image(item.author_avatar ? `${DOMAIN}${item.author_avatar}` : $r('app.media.app_icon'))
+                        .width(20).height(20).borderRadius(10)
+                      Text(item.author_name).fontSize(12).fontColor('#999').margin({left: 5})
+                      Blank()
+                      SymbolGlyph($r('sys.symbol.heart')).fontSize(14).fontColor(['#999'])
+                      Text(item.like_count.toString()).fontSize(12).fontColor('#999').margin({left: 2})
+                    }.width('100%').margin({top: 10})
+                  }.layoutWeight(1).height(100).padding({left: 10}).justifyContent(FlexAlign.SpaceBetween).alignItems(HorizontalAlign.Start)
+                }
+                .width('100%').padding(10).backgroundColor(Color.White).borderRadius(8)
+                .onClick(() => {
+                  this.pageStack.pushPath({ name: 'PostDetail', param: new PostParams(item.id) });
+                })
+              }
+            })
+          }.layoutWeight(1).width('100%').padding(10)
+        }
+      }.height('100%').backgroundColor('#F5F5F5')
+    }.hideTitleBar(true)
   }
 }

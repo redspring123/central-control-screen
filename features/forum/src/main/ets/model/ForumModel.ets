@@ -18,7 +18,7 @@ export interface ForumPost {
   title: string;
   content: string;
   images: string[];
-  tags: string;
+  tags: string[]; // Changed to string[]
   type: number; // 0图文 1视频
   like_count: number;
   view_count: number;
