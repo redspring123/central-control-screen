@@ -22,6 +22,17 @@ export class UserRepo {
   // 获取用户详细信息 (User + Profile)
   static async getUserProfile(userId: number): Promise<UserProfile> {
     const store = AppDatabase.getStore();
+    if (!store) {
+      return {
+        userId,
+        name: '',
+        phone: '',
+        height: 0,
+        weight: 0,
+        age: 0,
+        gender: '未知'
+      };
+    }
     
     // 1. 查询 User 表
     let userPredicates = new relationalStore.RdbPredicates('user');
@@ -71,6 +82,7 @@ export class UserRepo {
   // 更新用户信息
   static async updateUserProfile(profile: UserProfile): Promise<boolean> {
     const store = AppDatabase.getStore();
+    if (!store) return false;
     
     try {
       // 1. 更新 User 表
@@ -116,6 +128,7 @@ export class UserRepo {
   // 注册
   static async register(account: string, password: string): Promise<boolean> {
     const store = AppDatabase.getStore();
+    if (!store) return false;
     // 1. 查重
     let predicates = new relationalStore.RdbPredicates('user');
     predicates.equalTo('account', account);
@@ -139,6 +152,7 @@ export class UserRepo {
   // 登录
   static async login(account: string, password: string): Promise<UserInfo | null> {
     const store = AppDatabase.getStore();
+    if (!store) return null;
     let predicates = new relationalStore.RdbPredicates('user');
     predicates.equalTo('account', account);
     predicates.equalTo('password', password);
@@ -163,6 +177,7 @@ export class UserRepo {
   // 设置用户为管理员
   static async setAdmin(account: string, isAdmin: boolean): Promise<boolean> {
     const store = AppDatabase.getStore();
+    if (!store) return false;
     const values: ValuesBucket = {
       'isAdmin': isAdmin ? 1 : 0
     };

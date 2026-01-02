@@ -101,8 +101,11 @@ const DDL: string[] = [
   `CREATE TABLE IF NOT EXISTS doctor (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    title TEXT,
     hospital TEXT,
     department TEXT,
+    specialty TEXT,
+    fee REAL DEFAULT 0,
     intro TEXT,
     priority_base REAL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -130,6 +133,10 @@ export class AppDatabase {
     AppDatabase.ctx = context;
   }
 
+  static getStore(): relationalStore.RdbStore | null {
+    return AppDatabase.store;
+  }
+
   static async init(context?: Context): Promise<void> {
     if (AppDatabase.store) return;
     if (context) AppDatabase.setContext(context);
@@ -149,6 +156,11 @@ export class AppDatabase {
       for (const sql of DDL) {
         await AppDatabase.store.executeSql(sql);
       }
+      
+      // 尝试添加新字段 (如果表已存在且字段缺失)
+      try { await AppDatabase.store.executeSql('ALTER TABLE doctor ADD COLUMN title TEXT'); } catch (e) {}
+      try { await AppDatabase.store.executeSql('ALTER TABLE doctor ADD COLUMN specialty TEXT'); } catch (e) {}
+      try { await AppDatabase.store.executeSql('ALTER TABLE doctor ADD COLUMN fee REAL DEFAULT 0'); } catch (e) {}
 
       // 数据库升级逻辑：尝试添加 isAdmin 字段
       try {
@@ -162,9 +174,47 @@ export class AppDatabase {
 
       // 检查并创建默认管理员
       await AppDatabase.createDefaultAdmin();
+      
+      // [调试] 打印数据库内容，方便查看数据是否写入
+      // await AppDatabase.dumpToLog(); 
 
     } catch (err) {
       console.error(`AppDatabase: 初始化失败 - ${JSON.stringify(err)}`);
+    }
+  }
+
+  // [新增] 调试方法：将数据库内容打印到日志
+  static async dumpToLog() {
+    if (!AppDatabase.store) return;
+    try {
+      console.info('=== DATABASE DUMP START ===');
+      
+      // 1. Dump Users
+      let rs = await AppDatabase.store.querySql('SELECT * FROM user');
+      console.info(`Table [user]: ${rs.rowCount} rows`);
+      while (rs.goToNextRow()) {
+        const id = rs.getLong(rs.getColumnIndex('id'));
+        const account = rs.getString(rs.getColumnIndex('account'));
+        const name = rs.getString(rs.getColumnIndex('name'));
+        const isAdmin = rs.getLong(rs.getColumnIndex('isAdmin'));
+        console.info(`  User: id=${id}, account=${account}, name=${name}, isAdmin=${isAdmin}`);
+      }
+      rs.close();
+
+      // 2. Dump Doctors
+      rs = await AppDatabase.store.querySql('SELECT * FROM doctor');
+      console.info(`Table [doctor]: ${rs.rowCount} rows`);
+      while (rs.goToNextRow()) {
+        const id = rs.getLong(rs.getColumnIndex('id'));
+        const name = rs.getString(rs.getColumnIndex('name'));
+        const hospital = rs.getString(rs.getColumnIndex('hospital'));
+        console.info(`  Doctor: id=${id}, name=${name}, hospital=${hospital}`);
+      }
+      rs.close();
+      
+      console.info('=== DATABASE DUMP END ===');
+    } catch (e) {
+      console.error('Dump failed:', JSON.stringify(e));
     }
   }
 
@@ -208,12 +258,5 @@ export class AppDatabase {
     } catch (e) {
       console.error('AppDatabase: 创建默认管理员失败', e);
     }
-  }
-
-  static getStore(): relationalStore.RdbStore {
-    if (!AppDatabase.store) {
-      throw new Error('AppDatabase 未初始化，请先调用 AppDatabase.init()');
-    }
-    return AppDatabase.store;
   }
 }
