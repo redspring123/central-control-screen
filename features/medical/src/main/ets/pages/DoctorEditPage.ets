@@ -69,86 +69,94 @@ export struct DoctorEditPage {
       Row() {
         Image($r('app.media.icon_back'))
           .width(24).height(24)
+          .fillColor($r('app.color.text_primary'))
           .onClick(() => router.back())
         Text(this.isEdit ? '编辑医生' : '添加医生')
           .fontSize(18).fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_primary'))
           .margin({ left: 16 })
       }
       .width('100%')
       .padding(16)
-      .backgroundColor('#F1F3F5')
+      .backgroundColor($r('app.color.bg_page'))
 
       Scroll() {
         Column({ space: 16 }) {
           // 姓名
           Row() {
-            Text('姓名').width(80)
+            Text('姓名').width(80).fontColor($r('app.color.text_primary'))
             TextInput({ text: this.doctor.name })
               .onChange((val) => this.doctor.name = val)
               .layoutWeight(1)
               .height(40)
-              .backgroundColor(Color.White)
+              .backgroundColor($r('app.color.input_bg'))
+              .fontColor($r('app.color.text_primary'))
               .borderRadius(8)
           }.width('100%')
 
           // 职称
           Row() {
-            Text('职称').width(80)
+            Text('职称').width(80).fontColor($r('app.color.text_primary'))
             TextInput({ text: this.doctor.title })
               .onChange((val) => this.doctor.title = val)
               .layoutWeight(1)
               .height(40)
-              .backgroundColor(Color.White)
+              .backgroundColor($r('app.color.input_bg'))
+              .fontColor($r('app.color.text_primary'))
               .borderRadius(8)
           }.width('100%')
 
           // 医院
           Row() {
-            Text('医院').width(80)
+            Text('医院').width(80).fontColor($r('app.color.text_primary'))
             TextInput({ text: this.doctor.hospital })
               .onChange((val) => this.doctor.hospital = val)
               .layoutWeight(1)
               .height(40)
-              .backgroundColor(Color.White)
+              .backgroundColor($r('app.color.input_bg'))
+              .fontColor($r('app.color.text_primary'))
               .borderRadius(8)
           }.width('100%')
 
           // 科室
           Row() {
-            Text('科室').width(80)
+            Text('科室').width(80).fontColor($r('app.color.text_primary'))
             TextInput({ text: this.doctor.department })
               .onChange((val) => this.doctor.department = val)
               .layoutWeight(1)
               .height(40)
-              .backgroundColor(Color.White)
+              .backgroundColor($r('app.color.input_bg'))
+              .fontColor($r('app.color.text_primary'))
               .borderRadius(8)
           }.width('100%')
 
           // 擅长
           Row() {
-            Text('擅长').width(80)
+            Text('擅长').width(80).fontColor($r('app.color.text_primary'))
             TextInput({ text: this.doctor.specialty })
               .onChange((val) => this.doctor.specialty = val)
               .layoutWeight(1)
               .height(40)
-              .backgroundColor(Color.White)
+              .backgroundColor($r('app.color.input_bg'))
+              .fontColor($r('app.color.text_primary'))
               .borderRadius(8)
           }.width('100%')
 
           // 简介
           Row() {
-            Text('简介').width(80)
+            Text('简介').width(80).fontColor($r('app.color.text_primary'))
             TextInput({ text: this.doctor.intro })
               .onChange((val) => this.doctor.intro = val)
               .layoutWeight(1)
               .height(40)
-              .backgroundColor(Color.White)
+              .backgroundColor($r('app.color.input_bg'))
+              .fontColor($r('app.color.text_primary'))
               .borderRadius(8)
           }.width('100%')
           
           // 费用
           Row() {
-            Text('挂号费').width(80)
+            Text('挂号费').width(80).fontColor($r('app.color.text_primary'))
             TextInput({ text: this.doctor.fee.toString() })
               .type(InputType.Number)
               .onChange((val) => {
@@ -156,7 +164,8 @@ export struct DoctorEditPage {
               })
               .layoutWeight(1)
               .height(40)
-              .backgroundColor(Color.White)
+              .backgroundColor($r('app.color.input_bg'))
+              .fontColor($r('app.color.text_primary'))
               .borderRadius(8)
           }.width('100%')
 
@@ -182,6 +191,6 @@ export struct DoctorEditPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor('#F1F3F5')
+    .backgroundColor($r('app.color.bg_page'))
   }
 }

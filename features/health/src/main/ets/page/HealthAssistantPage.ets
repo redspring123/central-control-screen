@@ -186,16 +186,16 @@ export struct HealthAssistantPage {
       Row() {
         SymbolGlyph($r('sys.symbol.chevron_left'))//系统内置图标
           .fontSize(24)
-          .fontColor([Color.Black])
+          .fontColor([$r('app.color.text_white')])
           .onClick(() => router.back())
         Text("健康小助手")
           .fontSize(20).fontWeight(FontWeight.Bold)
-          .fontColor(Color.Black) // 强制黑色
+          .fontColor($r('app.color.text_white')) // 适配深色模式
           .margin({ left: 15 })
       }
       .width('100%')
       .padding(15)
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.bg_card'))
       .shadow({ radius: 2, color: 'rgba(0,0,0,0.1)', offsetY: 2 })
 
       // 2. 聊天列表
@@ -207,7 +207,7 @@ export struct HealthAssistantPage {
                 // AI 头像
                 Image($r('app.media.icon_heart_rate')) // 假设有个健康图标，或者用通用图标
                   .width(40).height(40)
-                  .backgroundColor('#E3F2FD')
+                  .backgroundColor($r('app.color.bubble_bg'))
                   .borderRadius(20)
                   .padding(8)
                   .margin({ right: 10 })
@@ -215,8 +215,8 @@ export struct HealthAssistantPage {
                 // AI 消息气泡
                 Text(msg.content)
                   .fontSize(16)
-                  .fontColor(Color.Black) // 强制黑色字体，防止深色模式下变白看不见
-                  .backgroundColor(Color.White)
+                  .fontColor($r('app.color.text_white')) // 适配深色模式
+                  .backgroundColor($r('app.color.bubble_bg'))
                   .padding(12)
                   .borderRadius({ topLeft: 0, topRight: 12, bottomLeft: 12, bottomRight: 12 })
                   .layoutWeight(1)
@@ -237,7 +237,7 @@ export struct HealthAssistantPage {
                 Image($r('app.media.user_icon'))
                   .width(40).height(40)
                   .borderRadius(20)
-                  .backgroundColor('#F5F5F5')
+                  .backgroundColor($r('app.color.bg_icon_container'))
               }
             }
             .width('100%')
@@ -249,16 +249,16 @@ export struct HealthAssistantPage {
       .layoutWeight(1)
       .width('100%')
       .padding(15)
-      .backgroundColor('#F5F7FA')
+      .backgroundColor($r('app.color.bg_page'))
 
       // 3. 输入区
       Row() {
         TextInput({ placeholder: '请输入你的健康问题...', text: this.inputText })
           .layoutWeight(1)
           .height(40)
-          .fontColor(Color.Black) // 强制黑色字体
-          .placeholderColor(Color.Gray) // 强制占位符颜色
-          .backgroundColor(Color.White)
+          .fontColor($r('app.color.text_white')) // 适配深色模式
+          .placeholderColor($r('app.color.text_gray')) // 适配深色模式
+          .backgroundColor($r('app.color.bg_card'))
           .borderRadius(20)
           .padding({ left: 15, right: 15 })
           .onChange((value) => this.inputText = value)
@@ -272,9 +272,10 @@ export struct HealthAssistantPage {
       }
       .width('100%')
       .padding(10)
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.bg_card'))
     }
     .width('100%')
     .height('100%')
+    .backgroundColor($r('app.color.bg_page')) // 确保根容器也有背景色
   }
 }

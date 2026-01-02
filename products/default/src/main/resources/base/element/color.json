@@ -1,14 +1,17 @@
 {
   "color": [
-    { "name": "bg_page", "value": "#FF1FAFEF" },
-    { "name": "bg_card", "value": "#FF8D8787" },
-    { "name": "text_white", "value": "#FF000000" },
-    { "name": "text_gray", "value": "#AAAAAA" },
+    { "name": "bg_page", "value": "#FFFFFF" },
+    { "name": "bg_card", "value": "#FFFFFF" },
+    { "name": "text_white", "value": "#000000" },
+    { "name": "text_gray", "value": "#666666" },
     { "name": "text_red", "value": "#FF4444" },
     { "name": "text_green", "value": "#4CAF50" },
     { "name": "text_blue", "value": "#2196F3" },
     { "name": "btn_green", "value": "#4CAF50" },
     { "name": "btn_red", "value": "#F44336" },
-    { "name": "btn_blue", "value": "#2196F3" }
+    { "name": "btn_blue", "value": "#2196F3" },
+    { "name": "input_bg", "value": "#F5F5F5" },
+    { "name": "bubble_bg", "value": "#F2F2F2" },
+    { "name": "bg_icon_container", "value": "#F0F0F0" }
   ]
 }

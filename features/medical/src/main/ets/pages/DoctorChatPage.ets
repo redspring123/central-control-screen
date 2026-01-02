@@ -202,17 +202,17 @@ export struct DoctorChatPage {
       Row() {
         SymbolGlyph($r('sys.symbol.chevron_left'))
           .fontSize(24)
-          .fontColor([Color.Black]) // 强制黑色
+          .fontColor([$r('app.color.text_primary')]) // 适配深色模式
           .onClick(() => router.back())
         
         Column() {
           Text(this.doctorInfo ? `${this.doctorInfo.name}医生` : '在线问诊')
             .fontSize(18).fontWeight(FontWeight.Bold)
-            .fontColor(Color.Black)
+            .fontColor($r('app.color.text_primary'))
           if (this.doctorInfo) {
             Row() {
               Text(`${this.doctorInfo.department} | ${this.doctorInfo.title}`)
-                .fontSize(12).fontColor(Color.Gray)
+                .fontSize(12).fontColor($r('app.color.text_gray_light'))
               Text(` | ¥${this.doctorInfo.fee}`)
                 .fontSize(12).fontColor('#FFC107').fontWeight(FontWeight.Bold)
             }.margin({ top: 2 })
@@ -221,7 +221,7 @@ export struct DoctorChatPage {
       }
       .width('100%')
       .padding(15)
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.bg_card'))
       .shadow({ radius: 2, color: 'rgba(0,0,0,0.1)', offsetY: 2 })
 
       // 2. 聊天列表
@@ -233,7 +233,7 @@ export struct DoctorChatPage {
                 // 医生头像
                 Image($r('app.media.icon_doctor'))
                   .width(40).height(40)
-                  .backgroundColor('#E3F2FD')
+                  .backgroundColor($r('app.color.bg_icon_container'))
                   .borderRadius(20)
                   .padding(5)
                   .margin({ right: 10 })
@@ -242,8 +242,8 @@ export struct DoctorChatPage {
                 // 消息气泡
                 Text(msg.content)
                   .fontSize(16)
-                  .fontColor(Color.Black)
-                  .backgroundColor(Color.White)
+                  .fontColor($r('app.color.text_primary'))
+                  .backgroundColor($r('app.color.bubble_bg'))
                   .padding(12)
                   .borderRadius({ topLeft: 0, topRight: 12, bottomLeft: 12, bottomRight: 12 })
                   .layoutWeight(1)
@@ -264,7 +264,7 @@ export struct DoctorChatPage {
                 Image($r('app.media.user_icon'))
                   .width(40).height(40)
                   .borderRadius(20)
-                  .backgroundColor('#F5F5F5')
+                  .backgroundColor($r('app.color.bg_icon_container'))
               }
             }
             .width('100%')
@@ -276,16 +276,16 @@ export struct DoctorChatPage {
       .layoutWeight(1)
       .width('100%')
       .padding(15)
-      .backgroundColor('#F5F7FA')
+      .backgroundColor($r('app.color.bg_page'))
 
       // 3. 输入区
       Row() {
         TextInput({ placeholder: '请描述您的症状...', text: this.inputText })
           .layoutWeight(1)
           .height(40)
-          .fontColor(Color.Black)
-          .placeholderColor(Color.Gray)
-          .backgroundColor(Color.White)
+          .fontColor($r('app.color.text_primary'))
+          .placeholderColor($r('app.color.text_gray_light'))
+          .backgroundColor($r('app.color.input_bg'))
           .borderRadius(20)
           .padding({ left: 15, right: 15 })
           .onChange((value) => this.inputText = value)
@@ -299,9 +299,10 @@ export struct DoctorChatPage {
       }
       .width('100%')
       .padding(10)
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.bg_card'))
     }
     .width('100%')
     .height('100%')
+    .backgroundColor($r('app.color.bg_page')) // 确保根容器也有背景色
   }
 }

@@ -179,16 +179,17 @@ export struct HealthDataEditPage {
       Row() {
         Image($r('app.media.icon_back'))
           .width(24).height(24)
-          .fillColor(Color.Black)
+          .fillColor($r('app.color.text_white'))
           .onClick(() => router.back())
         Text('健康数据管理') // 修改标题以体现管理功能
           .fontSize(20)
           .fontWeight(FontWeight.Bold)
+          .fontColor($r('app.color.text_white'))
           .margin({ left: 16 })
       }
       .width('100%')
       .padding({ top: 40, left: 20, bottom: 20 })
-      .backgroundColor(Color.White)
+      .backgroundColor($r('app.color.bg_card'))
       .shadow({ radius: 2, color: 'rgba(0,0,0,0.05)', offsetY: 2 })
 
       // 2. 主内容滚动区
@@ -200,7 +201,7 @@ export struct HealthDataEditPage {
           Row() {
             Text('当前日期: ' + this.dateStr)
               .fontSize(16)
-              .fontColor('#333')
+              .fontColor($r('app.color.text_white'))
               .layoutWeight(1)
 
             // 查找/切换日期按钮
@@ -212,7 +213,7 @@ export struct HealthDataEditPage {
           }
           .width('100%')
           .padding(12)
-          .backgroundColor('#F5F7FA')
+          .backgroundColor($r('app.color.input_bg'))
           .borderRadius(8)
 
           // --- 数据录入区域 (Add/Modify) ---
@@ -243,7 +244,8 @@ export struct HealthDataEditPage {
               .type(InputType.Number)
               .layoutWeight(1)
               .height(45)
-              .backgroundColor('#F5F7FA')
+              .backgroundColor($r('app.color.input_bg'))
+              .fontColor($r('app.color.text_white'))
               .borderRadius(8)
               .onChange((val) => this.bpSystolic = val)
             Text('/').fontSize(20).fontColor(Color.Gray)
@@ -251,7 +253,8 @@ export struct HealthDataEditPage {
               .type(InputType.Number)
               .layoutWeight(1)
               .height(45)
-              .backgroundColor('#F5F7FA')
+              .backgroundColor($r('app.color.input_bg'))
+              .fontColor($r('app.color.text_white'))
               .borderRadius(8)
               .onChange((val) => this.bpDiastolic = val)
           }.width('100%')
@@ -287,7 +290,7 @@ export struct HealthDataEditPage {
     }
     .width('100%')
     .height('100%')
-    .backgroundColor(Color.White)
+    .backgroundColor($r('app.color.bg_page'))
   }
 
   // --- UI 组件封装 ---
@@ -297,7 +300,7 @@ export struct HealthDataEditPage {
       .fontWeight(FontWeight.Bold)
       .width('100%')
       .margin({ top: 12, bottom: 8 })
-      .fontColor('#333')
+      .fontColor($r('app.color.text_white'))
   }
 
   @Builder InputBox(label: string, placeholder: string, value: string, onChange: (val: string) => void) {
@@ -307,7 +310,8 @@ export struct HealthDataEditPage {
         .type(InputType.NUMBER_DECIMAL)
         .width('100%')
         .height(45)
-        .backgroundColor('#F5F7FA')
+        .backgroundColor($r('app.color.input_bg'))
+        .fontColor($r('app.color.text_white'))
         .borderRadius(8)
         .onChange(onChange)
     }
