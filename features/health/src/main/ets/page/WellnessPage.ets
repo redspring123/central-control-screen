@@ -21,6 +21,8 @@ export struct WellnessPage {
   @State userPhone: string = '';
   @State userAge: number = 0;
   @State userGender: string = '未知';
+  @State userHeight: number = 0;
+  @State userWeight: number = 0;
 
   aboutToAppear() {
     // 同步系统当前的深浅模式状态
@@ -31,6 +33,7 @@ export struct WellnessPage {
 
   onPageShow() {
     this.loadHealthData();
+    this.loadUserProfile();
   }
 
   async loadUserProfile() {
@@ -45,6 +48,8 @@ export struct WellnessPage {
           this.userPhone = profile.phone || '';
           this.userAge = profile.age || 0;
           this.userGender = profile.gender || '未知';
+          this.userHeight = profile.height || 0;
+          this.userWeight = profile.weight || 0;
         }
       } catch (e) {
         console.error('加载用户画像失败:', JSON.stringify(e as object));
@@ -178,8 +183,7 @@ export struct WellnessPage {
                 Blank()
 
                 Column({ space: 5 }) {
-                  Text("广东省第二人民医院").fontSize(16).fontColor(Color.White)
-                  Text("入住: 神经内科").fontSize(14).fontColor($r('app.color.text_cyan'))
+
                 }.alignItems(HorizontalAlign.End)
               }
               .width('100%')
@@ -208,19 +212,19 @@ export struct WellnessPage {
 
                   // 2. 状态显示 + 一键呼叫 (复用原有逻辑，但调整布局)
                   Column({ space: 15 }) {
-                     // 环境与安防状态
+                     // 用户身高体重信息
                      Column() {
-                        Row() {
-                          Image($r('app.media.icon_sun')).width(16).height(16).margin({ right: 5 })
-                          Text("光照: 13Lx").fontSize(12).fontColor(Color.White)
-                          Blank()
-                          Image($r('app.media.icon_co2')).width(16).height(16).margin({ right: 5 })
-                          Text("CO2: 1305").fontSize(12).fontColor(Color.White)
-                        }.width('100%').margin({ bottom: 15 })
-                        Divider().color('rgba(255,255,255,0.2)').margin({ bottom: 15 })
                         Row({ space: 20 }) {
-                          Column() { Image($r('app.media.icon_fall')).width(30).height(30); Text("未摔倒").fontSize(14).fontColor(Color.White).margin({ top: 5 }) }
-                          Column() { Image($r('app.media.icon_bed_status')).width(30).height(30); Text("离床").fontSize(14).fontColor(Color.White).margin({ top: 5 }) }
+                          Column() { 
+                            Image($r('app.media.icon_height')).width(30).height(30); 
+                            Text("身高").fontSize(12).fontColor(Color.White).margin({ top: 5 })
+                            Text(`${this.userHeight}cm`).fontSize(14).fontColor(Color.White).fontWeight(FontWeight.Bold)
+                          }
+                          Column() { 
+                            Image($r('app.media.icon_weight')).width(30).height(30); 
+                            Text("体重").fontSize(12).fontColor(Color.White).margin({ top: 5 })
+                            Text(`${this.userWeight}kg`).fontSize(14).fontColor(Color.White).fontWeight(FontWeight.Bold)
+                          }
                         }.justifyContent(FlexAlign.Center).width('100%')
                      }
                      .padding(15)
@@ -263,28 +267,19 @@ export struct WellnessPage {
 
                   // B. 右侧：状态显示 + 一键呼叫
                   Column({ space: 20 }) {
-                    // 上部分：环境与安防状态
+                    // 上部分：用户身高体重信息
                     Column() {
-                      // 环境数据
-                      Row() {
-                        Image($r('app.media.icon_sun')).width(16).height(16).margin({ right: 5 }) // [需补充]
-                        Text("光照: 13Lx").fontSize(12).fontColor(Color.White)
-                        Blank()
-                        Image($r('app.media.icon_co2')).width(16).height(16).margin({ right: 5 }) // [需补充]
-                        Text("CO2: 1305").fontSize(12).fontColor(Color.White)
-                      }.width('100%').margin({ bottom: 15 })
-
-                      Divider().color('rgba(255,255,255,0.2)').margin({ bottom: 15 })
-
                       // 状态图标
                       Row({ space: 20 }) {
                         Column() {
-                          Image($r('app.media.icon_fall')).width(30).height(30) // [需补充]
-                          Text("未摔倒").fontSize(14).fontColor(Color.White).margin({ top: 5 })
+                          Image($r('app.media.icon_height')).width(30).height(30)
+                          Text("身高").fontSize(12).fontColor(Color.White).margin({ top: 5 })
+                          Text(`${this.userHeight}cm`).fontSize(14).fontColor(Color.White).fontWeight(FontWeight.Bold)
                         }
                         Column() {
-                          Image($r('app.media.icon_bed_status')).width(30).height(30) // [需补充]
-                          Text("离床").fontSize(14).fontColor(Color.White).margin({ top: 5 })
+                          Image($r('app.media.icon_weight')).width(30).height(30)
+                          Text("体重").fontSize(12).fontColor(Color.White).margin({ top: 5 })
+                          Text(`${this.userWeight}kg`).fontSize(14).fontColor(Color.White).fontWeight(FontWeight.Bold)
                         }
                       }.justifyContent(FlexAlign.Center).width('100%')
                     }
