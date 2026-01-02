@@ -15,6 +15,23 @@ export class RouterHelper {
     let params: Record<string, Object> = {};
 
     switch (key) {
+      case 'HealthForumPage':
+        try {
+          router.pushNamedRoute({
+            name: 'HealthForumPage', // 必须和 ForumPage.ets 里的 @Entry({ routeName: ... }) 一致
+            params: params
+          }, router.RouterMode.Single, (err) => {
+            if (err) {
+              console.error(`论坛跳转失败: ${err.code}, ${err.message}`);
+              try { promptAction.showToast({ message: `跳转失败: ${err.message}` }); } catch (e) {}
+            }
+          });
+        } catch (e) {
+          console.error('router.pushNamedRoute threw', e);
+          try { promptAction.showToast({ message: '跳转异常，请检查路由注册' }); } catch (err) {}
+        }
+        return;
+
       case 'card_health': // 居家康养
 
         router.pushNamedRoute({
