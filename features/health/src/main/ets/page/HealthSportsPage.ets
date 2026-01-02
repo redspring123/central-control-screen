@@ -67,7 +67,7 @@ export struct HealthSportsPage {
       console.info('调用getTodaySports...');
       const sportsData = await viewModel.getTodaySports();
       console.info('运动数据:', JSON.stringify(sportsData));
-      
+
       const currentSteps = sportsData.steps?.current || 0;
       const goalSteps = sportsData.steps?.goal || 10000;
 
@@ -86,18 +86,18 @@ export struct HealthSportsPage {
       console.info('调用getHealthData...');
       const healthData = await viewModel.getHealthData();
       console.info('健康数据:', JSON.stringify(healthData));
-      
+
       console.info('heart.heartRate:', healthData.heart?.heartRate);
       console.info('sleep.totalSleep:', healthData.sleep?.totalSleep);
       console.info('stress.value:', healthData.stress?.value);
-      
+
       this.ui.heartRateStr = (healthData.heart.heartRate || 0) + ' bpm';
-      
+
       const sleepTotal = healthData.sleep.totalSleep || 0;
       const sleepDeep = healthData.sleep.deepSleep || 0;
       const sleepValue = sleepTotal > 0 ? sleepTotal : sleepDeep;
       this.ui.sleepStr = sleepValue.toFixed(1) + ' h';
-      
+
       this.ui.bloodPressureStr = `${healthData.bloodPressure.systolic}/${healthData.bloodPressure.diastolic} mmHg`;
       this.ui.spo2Str = (healthData.bloodOxygen.spo2 || 0) + ' %';
       this.ui.tempStr = (healthData.temperature.value || 0).toFixed(1) + ' °C';
@@ -109,7 +109,7 @@ export struct HealthSportsPage {
       this.ui.bpDateStr = healthData.bloodPressure.date || '--/--';
       this.ui.spo2DateStr = healthData.bloodOxygen.date || '--/--';
       this.ui.tempDateStr = healthData.temperature.date || '--/--';
-      
+
       console.info('UI更新完成');
       console.info('heartRateStr:', this.ui.heartRateStr);
       console.info('sleepStr:', this.ui.sleepStr);
