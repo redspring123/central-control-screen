@@ -23,6 +23,7 @@ export struct WellnessPage {
   @State userGender: string = '未知';
   @State userHeight: number = 0;
   @State userWeight: number = 0;
+  @State userBMI: number = 0;
 
   aboutToAppear() {
     // 同步系统当前的深浅模式状态
@@ -50,6 +51,14 @@ export struct WellnessPage {
           this.userGender = profile.gender || '未知';
           this.userHeight = profile.height || 0;
           this.userWeight = profile.weight || 0;
+          
+          // 计算BMI：体重(kg) / (身高(m) * 身高(m))
+          if (this.userHeight > 0 && this.userWeight > 0) {
+            const heightInMeters = this.userHeight / 100;
+            this.userBMI = parseFloat((this.userWeight / (heightInMeters * heightInMeters)).toFixed(1));
+          } else {
+            this.userBMI = 0;
+          }
         }
       } catch (e) {
         console.error('加载用户画像失败:', JSON.stringify(e as object));
@@ -214,22 +223,44 @@ export struct WellnessPage {
                   Column({ space: 15 }) {
                      // 用户身高体重信息
                      Column() {
-                        Row({ space: 20 }) {
-                          Column() { 
-                            Image($r('app.media.icon_height')).width(30).height(30); 
-                            Text("身高").fontSize(12).fontColor(Color.White).margin({ top: 5 })
-                            Text(`${this.userHeight}cm`).fontSize(14).fontColor(Color.White).fontWeight(FontWeight.Bold)
-                          }
-                          Column() { 
-                            Image($r('app.media.icon_weight')).width(30).height(30); 
-                            Text("体重").fontSize(12).fontColor(Color.White).margin({ top: 5 })
-                            Text(`${this.userWeight}kg`).fontSize(14).fontColor(Color.White).fontWeight(FontWeight.Bold)
-                          }
-                        }.justifyContent(FlexAlign.Center).width('100%')
+                        Column({ space: 15 }) {
+                          // 身高单独一行，左图标中文字右数值
+                          Row() {
+                            // 图标靠左
+                            Image($r('app.media.icon_height')).width(25).height(25).margin({ right: 8 })
+                            // 文字居中
+                            Text("身高").fontSize(12).fontColor(Color.White).layoutWeight(1).textAlign(TextAlign.Center)
+                            // 数值靠右
+                            Text(`${this.userHeight}cm`).fontSize(12).fontColor(Color.White).fontWeight(FontWeight.Bold).margin({ left: 8 })
+                          }.width('100%').height(25).alignItems(VerticalAlign.Center)
+                          
+                          // 体重单独一行，左图标中文字右数值
+                          Row() {
+                            // 图标靠左
+                            Image($r('app.media.icon_weight')).width(25).height(25).margin({ right: 8 })
+                            // 文字居中
+                            Text("体重").fontSize(12).fontColor(Color.White).layoutWeight(1).textAlign(TextAlign.Center)
+                            // 数值靠右
+                            Text(`${this.userWeight}kg`).fontSize(12).fontColor(Color.White).fontWeight(FontWeight.Bold).margin({ left: 8 })
+                          }.width('100%').height(25).alignItems(VerticalAlign.Center)
+                          
+                          // BMI单独一行，左图标中文字右数值
+                          Row() {
+                            // 图标靠左
+                            Image($r('app.media.icon_BMI')).width(25).height(25).margin({ right: 8 })
+                            // 文字居中
+                            Text("BMI").fontSize(12).fontColor(Color.White).layoutWeight(1).textAlign(TextAlign.Center)
+                            // 数值靠右
+                            Text(this.userBMI === 0 ? '--' : `${this.userBMI}`).fontSize(12).fontColor(Color.White).fontWeight(FontWeight.Bold).margin({ left: 8 })
+                          }.width('100%').height(25).alignItems(VerticalAlign.Center)
+                        }
                      }
-                     .padding(15)
+                     .padding({ left: 8, right: 8, top: 8, bottom: 0 })
                      .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
                      .backdropBlur(20).border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' }).borderRadius($r('app.float.card_radius'))
+                     .width('80%')  // 【修改这里】调整宽度，例如改成 '80%' 或具体的数值 '300vp'
+                     .height(120)   // 【修改这里】调整高度，可以设定具体数值，如 120 或 150
+                     .margin({ top: 10, bottom: 10 }) // 可选：如果觉得太挤，可以加一点外边距
 
                      // 一键呼叫
                      Button() {
@@ -269,29 +300,48 @@ export struct WellnessPage {
                   Column({ space: 20 }) {
                     // 上部分：用户身高体重信息
                     Column() {
-                      // 状态图标
-                      Row({ space: 20 }) {
-                        Column() {
-                          Image($r('app.media.icon_height')).width(30).height(30)
-                          Text("身高").fontSize(12).fontColor(Color.White).margin({ top: 5 })
-                          Text(`${this.userHeight}cm`).fontSize(14).fontColor(Color.White).fontWeight(FontWeight.Bold)
-                        }
-                        Column() {
-                          Image($r('app.media.icon_weight')).width(30).height(30)
-                          Text("体重").fontSize(12).fontColor(Color.White).margin({ top: 5 })
-                          Text(`${this.userWeight}kg`).fontSize(14).fontColor(Color.White).fontWeight(FontWeight.Bold)
-                        }
-                      }.justifyContent(FlexAlign.Center).width('100%')
+                      Column({ space: 25 }) {
+                        // 身高单独一行，左图标中文字右数值
+                        Row() {
+                          // 图标靠左
+                          Image($r('app.media.icon_height')).width(30).height(30).margin({ right: 10 })
+                          // 文字居中
+                          Text("身高").fontSize(16).fontColor(Color.White).layoutWeight(1).textAlign(TextAlign.Center)
+                          // 数值靠右
+                          Text(`${this.userHeight}cm`).fontSize(16).fontColor(Color.White).fontWeight(FontWeight.Bold).margin({ left: 10 })
+                        }.width('100%').height(30).alignItems(VerticalAlign.Center)
+                        
+                        // 体重单独一行，左图标中文字右数值
+                        Row() {
+                          // 图标靠左
+                          Image($r('app.media.icon_weight')).width(30).height(30).margin({ right: 10 })
+                          // 文字居中
+                          Text("体重").fontSize(16).fontColor(Color.White).layoutWeight(1).textAlign(TextAlign.Center)
+                          // 数值靠右
+                          Text(`${this.userWeight}kg`).fontSize(16).fontColor(Color.White).fontWeight(FontWeight.Bold).margin({ left: 10 })
+                        }.width('100%').height(30).alignItems(VerticalAlign.Center)
+                        
+                        // BMI单独一行，左图标中文字右数值
+                        Row() {
+                          // 图标靠左
+                          Image($r('app.media.icon_BMI')).width(30).height(30).margin({ right: 10 })
+                          // 文字居中
+                          Text("BMI").fontSize(16).fontColor(Color.White).layoutWeight(1).textAlign(TextAlign.Center)
+                          // 数值靠右
+                          Text(this.userBMI === 0 ? '--' : `${this.userBMI}`).fontSize(16).fontColor(Color.White).fontWeight(FontWeight.Bold).margin({ left: 10 })
+                        }.width('100%').height(30).alignItems(VerticalAlign.Center)
+                      }
                     }
-                    .layoutWeight(1)
+
                     .width('100%')
-                    .padding(15)
+                    .padding({ left: 8, right: 8, top: 8, bottom: 0 })
                     // .backgroundColor($r('app.color.bg_card'))
                     // 修改为：动态半透明背景 + 毛玻璃效果
                     .backgroundColor(this.isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)')
                     .backdropBlur(20)
                     .border({ width: 0.5, color: 'rgba(255, 255, 255, 0.2)' })
                     .borderRadius($r('app.float.card_radius'))
+                    .height(200)
 
                     // 下部分：一键呼叫 (大按钮)
                     Button() {
