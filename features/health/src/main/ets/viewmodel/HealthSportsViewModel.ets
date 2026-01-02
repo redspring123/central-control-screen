@@ -188,7 +188,7 @@ export class HealthSportsViewModel {
 
   // 新增接口 - 设置当前登录用户ID
   static async setCurrentUserId(userId: number): Promise<void> {
-    await HealthDataService.setCurrentUserId(userId);
+    await HealthDataService.setCurrentUserIdValue(userId);
   }
 
   // 新增接口 - 获取当前登录用户ID
